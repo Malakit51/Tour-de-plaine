@@ -72,6 +72,15 @@ export function phrase(s: string): string {
   return s.endsWith('.') ? s : s + '.';
 }
 
+const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+
+/** « mercredi 5 novembre » (l'année seulement si ce n'est pas celle en cours) : titre d'un tour. */
+export function dateLongue(j: string): string {
+  const [a, m, d] = j.slice(0, 10).split('-').map(Number) as [number, number, number];
+  const annee = a !== new Date().getFullYear() ? ` ${a}` : '';
+  return `${JOURS[new Date(a, m - 1, d).getDay()]} ${d} ${MOIS_LONGS[m - 1]}${annee}`;
+}
+
 /** « octobre 2026 » : titre d'un mois dans les frises. */
 export function moisLong(j: string): string {
   const [a, m] = j.split('-').map(Number) as [number, number];

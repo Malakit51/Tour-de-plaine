@@ -6,7 +6,7 @@ import { icone, type Icone } from '../ui/icones';
 import { joursJusqua } from './commun';
 import { aRevoir } from './etat';
 import { ecranFiche } from './fiche';
-import { ecranInterventions } from './interventions';
+import { ecranJournal } from './journal';
 import { ecranPlaine } from './plaine';
 import { ecranReglages } from './reglages';
 import { ecranRevoir } from './revoir';
@@ -15,7 +15,7 @@ import { ecranSaisie } from './saisie';
 const ONGLETS: [string, string, Icone][] = [
   ['#plaine', 'Plaine', 'plaine'],
   ['#revoir', 'À revoir', 'revoir'],
-  ['#interventions', 'Interventions', 'interventions'],
+  ['#journal', 'Journal', 'journal'],
   ['#reglages', 'Réglages', 'reglages'],
 ];
 
@@ -31,8 +31,8 @@ function ecran(adresse: string): { page: HTMLElement; onglet: string | null } {
       return { page: ecranSaisie(null, param), onglet: null };
     case 'revoir':
       return { page: ecranRevoir(), onglet: '#revoir' };
-    case 'interventions':
-      return { page: ecranInterventions(), onglet: '#interventions' };
+    case 'journal':
+      return { page: ecranJournal(), onglet: '#journal' };
     case 'reglages':
       return { page: ecranReglages(), onglet: '#reglages' };
     default:

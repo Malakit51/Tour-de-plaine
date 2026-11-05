@@ -1,7 +1,7 @@
 // Pastilles proposées à la saisie : stades et constats selon la culture. Les choix faits souvent
 // remontent en tête (voir habitudes.ts), et un constat tapé à la main est gardé pour la suite.
 
-import type { Gravite, TypeNote } from '../registre/modele';
+import type { Gravite } from '../registre/modele';
 
 export type Groupe =
   'cereale' | 'colza' | 'betterave' | 'mais' | 'oeillette' | 'luzerne' | 'proteagineux' | 'autre';
@@ -21,7 +21,6 @@ export function groupe(culture: string): Groupe {
   return 'autre';
 }
 
-export const TYPES: TypeNote[] = ['Observation', 'Semis', 'Traitement', 'Fertilisation', 'Autre'];
 export const GRAVITES: Gravite[] = ['Faible', 'À surveiller', 'Intervenir'];
 export const CATEGORIES = [
   'Maladie',

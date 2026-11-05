@@ -1,6 +1,7 @@
-// Saisie d'une note au champ : la parcelle (proposée par le GPS), puis des pastilles (type,
-// stade, ce qui est vu, gravité, à revoir), une remarque (dictée au micro du clavier) et des
-// photos. Tout est facultatif sauf la parcelle.
+// Saisie d'une observation au champ : la parcelle (proposée par le GPS), puis des pastilles
+// (stade, ce qui est vu, gravité, à revoir), une remarque (dictée au micro du clavier) et des
+// photos. Tout est facultatif sauf la parcelle. L'appli n'enregistre que des observations : les
+// interventions viennent de Geofolia (décision de Maxime, 05/11/2026).
 
 import { noter, ordonner } from '../agro/habitudes';
 import {
@@ -8,12 +9,11 @@ import {
   DELAIS_REVOIR,
   GRAVITES,
   STADES,
-  TYPES,
   constatsProposes,
   groupe,
 } from '../agro/listes';
 import { ecrirePhoto, lirePhoto, nouvelId } from '../registre/base';
-import type { Gravite, Note, TypeNote } from '../registre/modele';
+import type { Gravite, Note } from '../registre/modele';
 import { el } from '../ui/dom';
 import { icone } from '../ui/icones';
 import {
@@ -65,7 +65,7 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     : noteVide(nomParcelle ?? parcelleIci() ?? '');
 
   const page = el('main', { class: 'ecran saisie' });
-  page.append(barreHaut(existante ? 'Modifier la note' : 'Nouvelle note'));
+  page.append(barreHaut(existante ? 'Modifier l’observation' : 'Nouvelle observation'));
   if (idNote && !existante) {
     page.append(el('p', { class: 'carte' }, 'Cette note n’existe plus.'));
     return page;
@@ -174,7 +174,7 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     );
   };
 
-  // ---------- Observation (catégorie, constats, gravité) : seulement pour une observation ----------
+  // ---------- Ce que tu vois (catégorie, constats) et gravité ----------
   const zoneObservation = el(
     'section',
     { class: 'bloc' },
@@ -192,7 +192,6 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
       (c) => (n.gravite = (c[0] ?? '') as Gravite | ''),
     ),
   );
-  const montrerObservation = () => (zoneObservation.hidden = n.type !== 'Observation');
 
   // ---------- À revoir ----------
   const libelles = DELAIS_REVOIR.map((j) => `${j} jours`);
@@ -281,25 +280,7 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
   const champDate = el('input', { type: 'datetime-local', value: n.date });
   champDate.addEventListener('change', () => champDate.value && (n.date = champDate.value));
 
-  // ---------- Type ----------
-  const zoneType = el(
-    'section',
-    { class: 'bloc' },
-    el('h2', {}, 'Type'),
-    pastilles(TYPES, [n.type], (c) => {
-      n.type = (c[0] ?? 'Observation') as TypeNote;
-      montrerObservation();
-    }),
-  );
-  // Un type doit rester choisi : retoucher le type actif ne le décoche pas.
-  zoneType.addEventListener('click', () =>
-    zoneType
-      .querySelectorAll('.pastille')
-      .forEach((b) => b.setAttribute('aria-pressed', String(b.textContent === n.type))),
-  );
-
   dessinerParcelle();
-  montrerObservation();
 
   const enregistrer = async () => {
     if (!parcelle(n.parcelle)) {
@@ -308,6 +289,8 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
       return;
     }
     n.modifieLe = new Date().toISOString();
+    // Une note d'une ancienne version (« Semis », « Traitement »…) devient une observation.
+    n.type = 'Observation';
     await enregistrerNote(n);
     // Habitudes : ce qui vient d'être choisi remonte en tête la prochaine fois.
     const g = groupe(culture());
@@ -320,7 +303,6 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
 
   page.append(
     zoneParcelle,
-    zoneType,
     el('section', { class: 'bloc' }, zoneStade),
     zoneObservation,
     zoneRevoir,

@@ -1,6 +1,6 @@
 // Réglages : imports (Geofolia, contours de Jalon), correspondance des noms, sauvegarde, thème.
 
-import { MODELES, verifierCle, type Modele } from '../ia/claude';
+import { MODELES, nettoyerCle, verifierCle, type Modele } from '../ia/claude';
 import type { ContoursJalon } from '../registre/modele';
 import { contoursFichier, contoursSession, lireSessionJalon } from '../sources/jalon';
 import { lireZipGeofolia } from '../sources/geofolia';
@@ -314,7 +314,7 @@ function blocDictee(): HTMLElement {
   champ.value = etat.cleApi;
   const aRanger = etat.notes.filter((n) => n.aRanger);
   const enregistrerCle = async () => {
-    const cle = champ.value.trim();
+    const cle = nettoyerCle(champ.value);
     if (!cle) {
       await enregistrerCleApi('');
       message('Clé retirée : la dictée va dans la remarque, sans Claude.');

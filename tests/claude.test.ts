@@ -1,7 +1,7 @@
 // Dictée rangée par Claude : la demande envoyée et la lecture de la réponse, avec une API simulée
 // (aucun appel réel, aucune dépense).
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { rangerDictee, verifierCle, type Contexte } from '../src/ia/claude';
+import { defautCle, nettoyerCle, rangerDictee, verifierCle, type Contexte } from '../src/ia/claude';
 
 const contexte: Contexte = {
   aujourdhui: '2026-11-05',
@@ -49,6 +49,20 @@ function simuler(...reponses: Response[]) {
 }
 
 afterEach(() => vi.unstubAllGlobals());
+
+const CLE = 'sk-ant-api03-' + 'a'.repeat(95);
+
+describe('clé collée', () => {
+  it('retire les espaces et caractères invisibles ajoutés en copiant', () => {
+    expect(nettoyerCle(` ${CLE.slice(0, 50)}\u200b\n${CLE.slice(50)} `)).toBe(CLE);
+  });
+  it('reconnaît une clé masquée, incomplète, ou qui n’en est pas une', () => {
+    expect(defautCle(CLE)).toBeNull();
+    expect(defautCle('sk-ant-api03-abc...wxyz')).toMatch(/masquée/);
+    expect(defautCle('sk-ant-api03-abcdef')).toMatch(/incomplète/);
+    expect(defautCle('Tour de plaine - téléphone')).toMatch(/sk-ant-/);
+  });
+});
 
 describe('dictée rangée par Claude', () => {
   it('envoie la dictée avec les parcelles, et lit les pastilles', async () => {
@@ -126,7 +140,7 @@ describe('dictée rangée par Claude', () => {
         401,
       ),
     );
-    await expect(verifierCle('sk-ant-mauvaise', 'haiku')).rejects.toThrow(/Clé refusée/);
+    await expect(verifierCle(CLE, 'haiku')).rejects.toThrow(/Clé refusée.*invalid x-api-key/);
     simuler(
       reponse(
         {

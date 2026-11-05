@@ -53,7 +53,7 @@ async function traduire(e: unknown): Promise<ErreurClaude> {
   if (e instanceof ErreurClaude) return e;
   if (e instanceof Anthropic.AuthenticationError)
     return new ErreurClaude(
-      'Clé refusée ou expirée : crées-en une nouvelle dans la Console, puis colle-la dans Réglages › Dictée.',
+      `Clé refusée ou expirée : crées-en une nouvelle dans la Console, puis colle-la dans Réglages › Dictée. (Anthropic : ${e.message})`,
     );
   if (e instanceof Anthropic.PermissionDeniedError)
     return new ErreurClaude('Cette clé n’a pas le droit d’utiliser ce modèle.');
@@ -69,7 +69,28 @@ async function traduire(e: unknown): Promise<ErreurClaude> {
 }
 
 /** Vérifie la clé sans rien dépenser (lecture de la fiche du modèle). */
+/**
+ * Clé telle que collée, nettoyée : les messageries ajoutent parfois des espaces, des retours à la
+ * ligne ou des caractères invisibles en copiant.
+ */
+export function nettoyerCle(cle: string): string {
+  return cle.replace(/[\s\u200b-\u200d\u2060\ufeff]/g, '');
+}
+
+/** Ce qui ne va pas dans la forme de la clé (avant tout appel), ou null. */
+export function defautCle(cle: string): string | null {
+  if (!cle.startsWith('sk-ant-'))
+    return 'Ce n’est pas une clé de l’API : elle doit commencer par « sk-ant- ». (Le nom de la clé ou son identifiant ne suffisent pas.)';
+  if (/[.…•*]/.test(cle))
+    return 'Cette clé est masquée (points ou « … ») : c’est celle de la liste des clés. La clé complète ne s’affiche qu’une fois, à sa création : crées-en une nouvelle et copie-la tout de suite.';
+  if (cle.length < 80)
+    return `Clé incomplète (${cle.length} caractères, une clé en fait une centaine) : recopie-la en entier.`;
+  return null;
+}
+
 export async function verifierCle(cle: string, modele: Modele): Promise<void> {
+  const defaut = defautCle(cle);
+  if (defaut) throw new ErreurClaude(defaut);
   try {
     await (await client(cle)).models.retrieve(MODELES[modele].id);
   } catch (e) {

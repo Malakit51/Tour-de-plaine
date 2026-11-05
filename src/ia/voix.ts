@@ -25,9 +25,32 @@ function constructeur(): (new () => Reconnaissance) | undefined {
 export const voixDisponible = () => constructeur() !== undefined;
 
 /**
- * Écoute jusqu'à `arreter()`. `surTexte` reçoit tout le texte dicté depuis le début (phrases
- * terminées et phrase en cours). Chrome coupe l'écoute après un silence : elle est relancée
- * tant qu'on n'a pas arrêté.
+ * Texte d'une écoute à partir de tous ses résultats. Chrome sur Android renvoie souvent des
+ * résultats cumulés (« colza », « colza 6 feuilles », « colza 6 feuilles altises ») et répète
+ * les mêmes : un résultat qui reprend le texte déjà là le remplace au lieu de s'y ajouter.
+ */
+export function assembler(morceaux: readonly string[]): string {
+  let texte = '';
+  for (const brut of morceaux) {
+    const m = brut.trim().replace(/\s+/g, ' ');
+    if (!m) continue;
+    const t = texte.toLowerCase();
+    const n = m.toLowerCase();
+    if (n.startsWith(t))
+      texte = m; // même phrase, plus longue
+    else if (t.endsWith(n))
+      continue; // répétition de la fin
+    else texte = `${texte} ${m}`.trim();
+  }
+  return texte;
+}
+
+const joindre = (a: string, b: string) => `${a} ${b}`.trim();
+
+/**
+ * Écoute jusqu'à `arreter()`. `surTexte` reçoit tout le texte dicté depuis le début. Chrome coupe
+ * l'écoute après un silence : elle est relancée tant qu'on n'a pas arrêté. Sur Android, l'écoute
+ * continue de Chrome répète des mots : on écoute phrase par phrase, relancée à chaque fois.
  */
 export function ecouter(
   depart: string,
@@ -39,6 +62,7 @@ export function ecouter(
     surFin('La dictée vocale n’est pas disponible dans ce navigateur.');
     return { arreter: () => {} };
   }
+  const android = /Android/i.test(navigator.userAgent);
   let acquis = depart.trim();
   let actif = true;
   let erreur: string | undefined;
@@ -46,17 +70,12 @@ export function ecouter(
   const lancer = () => {
     r = new R();
     r.lang = 'fr-FR';
-    r.continuous = true;
+    r.continuous = !android;
     r.interimResults = true;
-    let enCours = '';
+    let session = '';
     r.onresult = (e) => {
-      enCours = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const res = e.results[i]!;
-        if (res.isFinal) acquis = `${acquis} ${res[0].transcript}`.trim();
-        else enCours += res[0].transcript;
-      }
-      surTexte(`${acquis} ${enCours}`.trim());
+      session = assembler(Array.from(e.results, (res) => res[0].transcript));
+      surTexte(joindre(acquis, session));
     };
     r.onerror = (e) => {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
@@ -70,6 +89,9 @@ export function ecouter(
             : `Dictée interrompue (${e.error}).`;
     };
     r.onend = () => {
+      // Ce qui a été dit pendant cette écoute est acquis, une seule fois.
+      acquis = joindre(acquis, session);
+      session = '';
       if (actif) lancer();
       else surFin(erreur);
     };

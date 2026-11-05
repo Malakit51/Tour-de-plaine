@@ -38,6 +38,8 @@ Attention : le `.gitignore` d'Assolmax-perso ignore tout dossier nommé `donnees
 
 Vite + TypeScript sans framework (comme Jalon), `npm run check` (prettier, tsc, vitest). IndexedDB (`src/registre/base.ts`) : notes, photos (réduites à 1600 px JPEG), valeurs (imports par campagne `geofolia/AAAA`, `jalon`, `choix-contours`, `habitudes`, `reglages`). Navigation par l'adresse (`#plaine`, `#parcelle/<nom>`, `#noter[/<nom>]`, `#note/<id>`, `#revoir`, `#interventions`, `#reglages`) : le retour du téléphone fonctionne. Raccourcis sur l'icône (manifeste) : « Nouvelle note », « À revoir ».
 
+Installation : le menu ⋮ de Chrome dit l'appli « déjà installée » (Jalon est installé à la même adresse malakit51.github.io). Comme dans Valeur engrais, la page propose elle-même « Installer » (bandeau en haut de Plaine et de Réglages, `src/app/installation.ts`, événement `beforeinstallprompt`) : cette fenêtre-là ne fait pas ce test.
+
 Fichiers repris de Jalon : `src/sources/taskdata.ts` (lecture du TASKDATA, sans modification), `src/formats/dezip.ts`, `src/ui/dom.ts`, la direction visuelle « Plein champ ».
 
 ## Hébergement

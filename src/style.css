@@ -321,6 +321,20 @@ label > select {
   margin-top: 6px;
 }
 
+/* ---------- Installation ---------- */
+.installer {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+.carte.installer > * + * {
+  margin-top: 0;
+}
+.installer .icone {
+  color: var(--vert);
+}
+
 /* ---------- Plaine ---------- */
 .bandeau-gps {
   display: flex;

@@ -16,6 +16,7 @@ import {
   importCourant,
   parcelles,
 } from './etat';
+import { bandeauInstallation } from './installation';
 import { fabriquerSauvegarde, reprendreSauvegarde } from './sauvegarde';
 import { choisirTheme, themeChoisi, type Theme } from './theme';
 
@@ -52,6 +53,8 @@ export function ecranReglages(): HTMLElement {
     { class: 'ecran' },
     el('header', { class: 'titre-accueil' }, el('h1', {}, 'Réglages')),
   );
+  const installer = bandeauInstallation();
+  if (installer) page.append(installer);
   page.append(blocGeofolia(), blocJalon(), blocCorrespondances(), blocSauvegarde(), blocTheme());
   page.append(
     el(

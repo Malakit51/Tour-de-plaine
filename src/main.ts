@@ -6,6 +6,7 @@ import './style.css';
 import { demanderStockageDurable } from './registre/base';
 import { message } from './app/commun';
 import { charger, enregistrerJalon, etat } from './app/etat';
+import { ecouterInstallation } from './app/installation';
 import { afficher } from './app/navigation';
 import { nettoyerPhotos } from './app/photos';
 import { initialiserGps } from './app/position';
@@ -37,6 +38,10 @@ async function garderHorsReseau(): Promise<void> {
     .catch(() => undefined);
 }
 
+let pret = false;
+// Tout de suite : Chrome peut proposer l'installation avant que les données soient chargées.
+ecouterInstallation(() => pret && afficher());
+
 async function demarrer(): Promise<void> {
   appliquerTheme();
   // Première page de l'appli : marquée, pour que « Retour » n'en sorte pas (voir revenir()).
@@ -59,6 +64,7 @@ async function demarrer(): Promise<void> {
       );
   });
   afficher();
+  pret = true;
   void demanderStockageDurable();
   void nettoyerPhotos(etat.notes);
   void garderHorsReseau().catch(() => undefined);

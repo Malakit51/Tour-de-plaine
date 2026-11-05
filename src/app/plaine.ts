@@ -4,6 +4,7 @@
 import { el } from '../ui/dom';
 import { icone } from '../ui/icones';
 import { dateCourte, joursJusqua, naviguer, nombre, pastilles } from './commun';
+import { bandeauInstallation } from './installation';
 import { aRevoir, etat, importCourant, notesDe, parcelles } from './etat';
 import {
   activerGps,
@@ -37,6 +38,8 @@ export function ecranPlaine(): HTMLElement {
         : null,
     ),
   );
+  const installer = bandeauInstallation();
+  if (installer) page.append(installer);
   if (!imp) {
     page.append(
       el(

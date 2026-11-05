@@ -271,6 +271,7 @@ button,
 /* ---------- Champs ---------- */
 input[type='search'],
 input[type='text'],
+input[type='password'],
 input[type='date'],
 input[type='datetime-local'],
 select,
@@ -317,7 +318,9 @@ textarea {
 label {
   display: block;
 }
-label > select {
+label > select,
+label > input[type='password'] {
+  display: block;
   margin-top: 6px;
 }
 
@@ -772,6 +775,68 @@ label > select {
 }
 .saisie .bloc[hidden] {
   display: none;
+}
+.bouton.dicter {
+  width: 100%;
+  min-height: 64px;
+  font-size: 1.2rem;
+  background: var(--vert-clair);
+  color: var(--vert);
+  border-color: var(--vert);
+}
+.bouton.dicter.ecoute {
+  background: var(--rouge);
+  border-color: var(--rouge);
+  color: #fff;
+  animation: ecoute 1.4s ease-in-out infinite;
+}
+@keyframes ecoute {
+  50% {
+    opacity: 0.75;
+  }
+}
+.bouton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.etat-dictee:empty {
+  display: none;
+}
+.badge.a-ranger {
+  align-self: flex-start;
+  margin-left: 0;
+  background: var(--ambre-fond);
+  color: var(--ambre-texte);
+}
+.dictee-brute {
+  color: var(--doux);
+  font-size: 0.92rem;
+}
+.dictee-brute summary {
+  cursor: pointer;
+}
+.dictee-brute p {
+  margin: 4px 0 0;
+  font-style: italic;
+}
+.resume-tour {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.resume-tour .texte-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--rayon);
+  background: var(--vert-clair);
+}
+.actions-resume {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.resume-tour > .bouton {
+  align-self: flex-start;
 }
 .parcelle-choisie {
   display: flex;

@@ -43,6 +43,12 @@ describe('sauvegarde dans un fichier', () => {
     expect(await base.lireValeur('choix-contours')).toEqual({ '31berl': '31 Berl' });
   });
 
+  it('ne met jamais la clé de l’API dans le fichier', async () => {
+    await base.ecrireValeur('cle-api', 'sk-ant-secret');
+    const fichier = await (await fabriquerSauvegarde()).text();
+    expect(fichier).not.toContain('sk-ant-secret');
+  });
+
   it('refuse un autre fichier', async () => {
     await expect(reprendreSauvegarde('{"format":"autre"}')).rejects.toThrow(/sauvegarde/);
     await expect(reprendreSauvegarde('pas du json')).rejects.toThrow(/sauvegarde/);

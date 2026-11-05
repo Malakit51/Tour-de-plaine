@@ -77,6 +77,10 @@ export interface Note {
   texte: string;
   /** Identifiants des photos (rangées à part). */
   photos: string[];
+  /** Dictée telle qu'entendue par le téléphone (gardée sous la synthèse de Claude). */
+  dictee?: string;
+  /** Dictée pas encore rangée par Claude (pas de réseau, pas de clé) : à ranger plus tard. */
+  aRanger?: boolean;
   creeLe: string;
   modifieLe: string;
 }

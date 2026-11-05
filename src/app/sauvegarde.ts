@@ -2,6 +2,7 @@
 // correspondances, habitudes), pour changer de téléphone ou ne rien perdre.
 
 import * as base from '../registre/base';
+import { CLE_API } from './etat';
 import type { Note } from '../registre/modele';
 
 const FORMAT = 'tour-de-plaine';
@@ -33,7 +34,9 @@ function depuisBase64(s: string, type: string): Blob {
 
 export async function fabriquerSauvegarde(maintenant = new Date()): Promise<Blob> {
   const valeurs: Record<string, unknown> = {};
-  for (const cle of await base.clesValeurs()) valeurs[cle] = await base.lireValeur(cle);
+  // La clé de l'API reste sur le téléphone : un fichier de sauvegarde se partage (Drive, mail).
+  for (const cle of await base.clesValeurs())
+    if (cle !== CLE_API) valeurs[cle] = await base.lireValeur(cle);
   const photos = [];
   for (const id of await base.clesPhotos()) {
     const p = await base.lirePhoto(id);
@@ -67,7 +70,8 @@ export async function reprendreSauvegarde(
   if (s?.format !== FORMAT || s.version !== 1 || !Array.isArray(s.notes)) {
     throw new Error('Ce fichier n’est pas une sauvegarde de Tour de plaine.');
   }
-  for (const [cle, v] of Object.entries(s.valeurs ?? {})) await base.ecrireValeur(cle, v);
+  for (const [cle, v] of Object.entries(s.valeurs ?? {}))
+    if (cle !== CLE_API) await base.ecrireValeur(cle, v);
   const actuelles = new Map((await base.toutesLesNotes()).map((n) => [n.id, n]));
   let notes = 0;
   for (const n of s.notes) {

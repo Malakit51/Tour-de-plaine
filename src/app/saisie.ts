@@ -1,6 +1,6 @@
-// Saisie d'une observation au champ : la parcelle (proposée par le GPS), puis des pastilles
-// (stade, ce qui est vu, gravité, à revoir), une remarque (dictée au micro du clavier) et des
-// photos. Tout est facultatif sauf la parcelle. L'appli n'enregistre que des observations : les
+// Saisie d'une observation au champ : la parcelle (proposée par le GPS), une dictée que Claude
+// range dans les pastilles (si la dictée est réglée), puis les pastilles (stade, ce qui est vu,
+// gravité, à revoir), une remarque et des photos. Tout est facultatif sauf la parcelle. L'appli n'enregistre que des observations : les
 // interventions viennent de Geofolia (décision de Maxime, 05/11/2026).
 
 import { noter, ordonner } from '../agro/habitudes';
@@ -12,6 +12,9 @@ import {
   constatsProposes,
   groupe,
 } from '../agro/listes';
+import { MODELES, rangerDictee, type Rangement } from '../ia/claude';
+import { contexteDictee } from '../ia/contexte';
+import { ecouter, voixDisponible } from '../ia/voix';
 import { ecrirePhoto, lirePhoto, nouvelId } from '../registre/base';
 import type { Gravite, Note } from '../registre/modele';
 import { el } from '../ui/dom';
@@ -23,6 +26,7 @@ import {
   jour,
   maintenantLocal,
   message,
+  naviguer,
   pastilles,
   revenir,
 } from './commun';
@@ -123,6 +127,8 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     }
     dessinerStade();
     dessinerConstats();
+    dessinerObservation();
+    dessinerRevoir();
   };
   const choisir = (nom: string) => {
     n.parcelle = nom;
@@ -136,7 +142,7 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     zoneStade.replaceChildren(
       el('h2', {}, 'Stade'),
       pastilles(
-        ordonner(etat.habitudes, `stade|${g}`, STADES[g]),
+        avec(ordonner(etat.habitudes, `stade|${g}`, STADES[g]), n.stade),
         n.stade ? [n.stade] : [],
         (c) => {
           n.stade = c[0] ?? '';
@@ -175,40 +181,57 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
   };
 
   // ---------- Ce que tu vois (catégorie, constats) et gravité ----------
+  const zoneCategorie = el('div', {});
+  const zoneGravite = el('div', {});
+  const dessinerObservation = () => {
+    zoneCategorie.replaceChildren(
+      pastilles(CATEGORIES, n.categorie ? [n.categorie] : [], (c) => {
+        n.categorie = c[0] ?? '';
+        n.constats = [];
+        dessinerConstats();
+      }),
+    );
+    zoneGravite.replaceChildren(
+      pastilles(
+        GRAVITES,
+        n.gravite ? [n.gravite] : [],
+        (c) => (n.gravite = (c[0] ?? '') as Gravite | ''),
+      ),
+    );
+  };
   const zoneObservation = el(
     'section',
     { class: 'bloc' },
     el('h2', {}, 'Ce que tu vois'),
-    pastilles(CATEGORIES, n.categorie ? [n.categorie] : [], (c) => {
-      n.categorie = c[0] ?? '';
-      n.constats = [];
-      dessinerConstats();
-    }),
+    zoneCategorie,
     zoneConstats,
     el('h2', {}, 'Gravité'),
-    pastilles(
-      GRAVITES,
-      n.gravite ? [n.gravite] : [],
-      (c) => (n.gravite = (c[0] ?? '') as Gravite | ''),
-    ),
+    zoneGravite,
   );
 
   // ---------- À revoir ----------
   const libelles = DELAIS_REVOIR.map((j) => `${j} jours`);
-  const delaiActuel = n.aRevoir
-    ? libelles.find((_, i) => ajouterJours(jour(), DELAIS_REVOIR[i]!) === n.aRevoir)
-    : undefined;
   const dateRevoir = el('input', { type: 'date', value: n.aRevoir, min: jour() });
+  const zoneDelais = el('div', {});
+  const dessinerRevoir = () => {
+    const delaiActuel = n.aRevoir
+      ? libelles.find((_, i) => ajouterJours(jour(), DELAIS_REVOIR[i]!) === n.aRevoir)
+      : undefined;
+    dateRevoir.value = n.aRevoir;
+    zoneDelais.replaceChildren(
+      pastilles(libelles, delaiActuel ? [delaiActuel] : [], (c) => {
+        const i = libelles.indexOf(c[0] ?? '');
+        n.aRevoir = i >= 0 ? ajouterJours(jour(), DELAIS_REVOIR[i]!) : '';
+        n.revu = false;
+        dateRevoir.value = n.aRevoir;
+      }),
+    );
+  };
   const zoneRevoir = el(
     'section',
     { class: 'bloc' },
     el('h2', {}, 'À revoir'),
-    pastilles(libelles, delaiActuel ? [delaiActuel] : [], (c) => {
-      const i = libelles.indexOf(c[0] ?? '');
-      n.aRevoir = i >= 0 ? ajouterJours(jour(), DELAIS_REVOIR[i]!) : '';
-      n.revu = false;
-      dateRevoir.value = n.aRevoir;
-    }),
+    zoneDelais,
     el('label', { class: 'ligne-champ' }, 'ou le', dateRevoir),
   );
   dateRevoir.addEventListener('change', () => {
@@ -221,7 +244,9 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
   // ---------- Remarque et photos ----------
   const texte = el('textarea', {
     rows: '3',
-    placeholder: 'Remarque (touche le micro du clavier pour dicter)',
+    placeholder: etat.cleApi
+      ? 'Remarque (Claude y met sa synthèse de la dictée)'
+      : 'Remarque (touche le micro du clavier pour dicter)',
   });
   texte.value = n.texte;
   texte.addEventListener('input', () => (n.texte = texte.value));
@@ -280,7 +305,136 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
   const champDate = el('input', { type: 'datetime-local', value: n.date });
   champDate.addEventListener('change', () => champDate.value && (n.date = champDate.value));
 
+  // ---------- Dictée ----------
+  // Avec une clé : la dictée a son propre champ, et Claude la range dans les pastilles. Sans clé :
+  // la dictée va directement dans la remarque.
+  const avecClaude = () => etat.cleApi !== '';
+  const champDictee = el('textarea', {
+    rows: '3',
+    placeholder: 'Ce que tu dictes s’écrit ici (tu peux corriger)',
+  });
+  champDictee.value = n.dictee ?? '';
+  const etatDictee = el('p', { class: 'doux etat-dictee' });
+  const boutonDicter = el('button', { type: 'button', class: 'bouton dicter' });
+  const boutonRanger = el(
+    'button',
+    { type: 'button', class: 'bouton principal' },
+    'Ranger avec Claude',
+  );
+  const autreModele = el('div', {});
+  let ecoute: { arreter: () => void } | null = null;
+  let rangee = false;
+  let derniereSynthese = '';
+
+  const dessinerBoutonDicter = () => {
+    boutonDicter.replaceChildren(icone('micro', 24), ecoute ? 'Arrêter' : 'Dicter');
+    boutonDicter.classList.toggle('ecoute', ecoute !== null);
+    boutonRanger.disabled = ecoute !== null || !champDictee.value.trim();
+  };
+  const cible = () => (avecClaude() ? champDictee : texte);
+  boutonDicter.addEventListener('click', () => {
+    if (ecoute) {
+      ecoute.arreter();
+      return;
+    }
+    const champ = cible();
+    ecoute = ecouter(
+      champ.value,
+      (t) => {
+        champ.value = t;
+        if (champ === texte) n.texte = t;
+        else n.dictee = t;
+      },
+      (erreur) => {
+        ecoute = null;
+        dessinerBoutonDicter();
+        if (erreur) message(erreur, true);
+        // Fin de la dictée : Claude range tout de suite s'il y a du réseau.
+        else if (avecClaude() && champDictee.value.trim() && navigator.onLine) void ranger();
+      },
+    );
+    etatDictee.textContent = 'Je t’écoute… touche « Arrêter » quand tu as fini.';
+    dessinerBoutonDicter();
+  });
+  champDictee.addEventListener('input', () => {
+    n.dictee = champDictee.value;
+    rangee = false;
+    dessinerBoutonDicter();
+  });
+
+  const appliquer = (r: Rangement) => {
+    if (r.parcelle) n.parcelle = r.parcelle;
+    n.stade = r.stade;
+    n.categorie = r.categorie;
+    n.constats = r.constats;
+    n.gravite = r.gravite as Gravite | '';
+    if (r.aRevoir) {
+      n.aRevoir = r.aRevoir;
+      n.revu = false;
+    }
+    // La synthèse remplace la précédente ; une remarque tapée à la main reste en dessous.
+    const ancienne = n.texte.trim();
+    n.texte =
+      !ancienne || ancienne === derniereSynthese ? r.synthese : `${r.synthese}\n${ancienne}`;
+    derniereSynthese = r.synthese;
+    texte.value = n.texte;
+    delete n.aRanger;
+    rangee = true;
+    dessinerParcelle();
+  };
+  const ranger = async (modele = etat.reglages.modeleDictee) => {
+    const dictee = champDictee.value.trim();
+    if (!dictee) return;
+    etatDictee.textContent = `${MODELES[modele].nom} range ta dictée…`;
+    boutonRanger.disabled = true;
+    autreModele.replaceChildren();
+    try {
+      appliquer(await rangerDictee(dictee, contexteDictee(n.parcelle), etat.cleApi, modele));
+      etatDictee.textContent = `Rangé par ${MODELES[modele].nom} : vérifie les pastilles, puis Enregistrer.`;
+      if (modele !== 'opus') {
+        autreModele.append(
+          el(
+            'button',
+            { type: 'button', class: 'lien', onclick: () => void ranger('opus') },
+            'Pas bien compris ? Re-ranger avec Opus',
+          ),
+        );
+      }
+    } catch (e) {
+      etatDictee.textContent = (e as Error).message;
+    } finally {
+      dessinerBoutonDicter();
+    }
+  };
+  boutonRanger.addEventListener('click', () => void ranger());
+
+  const zoneDictee = el('section', { class: 'bloc zone-dictee' });
+  if (voixDisponible() || avecClaude()) {
+    zoneDictee.append(el('h2', {}, 'Dictée'));
+    if (voixDisponible()) zoneDictee.append(boutonDicter);
+    if (avecClaude()) {
+      zoneDictee.append(champDictee, boutonRanger, etatDictee, autreModele);
+    } else {
+      zoneDictee.append(
+        el(
+          'p',
+          { class: 'doux' },
+          'Ta dictée va dans la remarque. Pour que Claude remplisse les pastilles tout seul : ',
+          el(
+            'button',
+            { type: 'button', class: 'lien', onclick: () => naviguer('#reglages') },
+            'régler la dictée',
+          ),
+          '.',
+        ),
+      );
+    }
+  }
+  dessinerBoutonDicter();
+
   dessinerParcelle();
+  // Dictée gardée sans être rangée (pas de réseau) : rangée dès l'ouverture s'il y a du réseau.
+  if (existante?.aRanger && avecClaude() && navigator.onLine) void ranger();
 
   const enregistrer = async () => {
     if (!parcelle(n.parcelle)) {
@@ -288,6 +442,12 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
       zoneParcelle.scrollIntoView({ behavior: 'smooth' });
       return;
     }
+    ecoute?.arreter();
+    // Dictée pas (encore) rangée par Claude : elle le sera plus tard.
+    const dicteeNouvelle = (n.dictee ?? '') !== (existante?.dictee ?? '');
+    if (avecClaude() && n.dictee?.trim() && !rangee && (n.aRanger || dicteeNouvelle))
+      n.aRanger = true;
+    if (!n.dictee?.trim()) delete n.dictee;
     n.modifieLe = new Date().toISOString();
     // Une note d'une ancienne version (« Semis », « Traitement »…) devient une observation.
     n.type = 'Observation';
@@ -303,6 +463,7 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
 
   page.append(
     zoneParcelle,
+    zoneDictee,
     el('section', { class: 'bloc' }, zoneStade),
     zoneObservation,
     zoneRevoir,
@@ -357,4 +518,9 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     ),
   );
   return page;
+}
+
+/** Les pastilles proposées, plus la valeur choisie si elle n'y est pas (dite à Claude, par ex.). */
+function avec(options: string[], valeur: string): string[] {
+  return valeur && !options.includes(valeur) ? [...options, valeur] : options;
 }

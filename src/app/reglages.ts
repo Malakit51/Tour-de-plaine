@@ -1,5 +1,6 @@
 // Réglages : imports (Geofolia, contours de Jalon), correspondance des noms, sauvegarde, thème.
 
+import { MODELES, verifierCle, type Modele } from '../ia/claude';
 import type { ContoursJalon } from '../registre/modele';
 import { contoursFichier, contoursSession, lireSessionJalon } from '../sources/jalon';
 import { lireZipGeofolia } from '../sources/geofolia';
@@ -10,6 +11,7 @@ import {
   changerReglages,
   charger,
   contourDe,
+  enregistrerCleApi,
   enregistrerImports,
   enregistrerJalon,
   etat,
@@ -55,7 +57,14 @@ export function ecranReglages(): HTMLElement {
   );
   const installer = bandeauInstallation();
   if (installer) page.append(installer);
-  page.append(blocGeofolia(), blocJalon(), blocCorrespondances(), blocSauvegarde(), blocTheme());
+  page.append(
+    blocGeofolia(),
+    blocJalon(),
+    blocCorrespondances(),
+    blocDictee(),
+    blocSauvegarde(),
+    blocTheme(),
+  );
   page.append(
     el(
       'p',
@@ -290,5 +299,100 @@ function blocTheme(): HTMLElement {
       const t = (Object.keys(noms) as Theme[]).find((k) => noms[k] === c[0]) ?? 'auto';
       choisirTheme(t);
     }),
+  );
+}
+
+const NOTICE = 'https://github.com/Malakit51/Tour-de-plaine/blob/main/docs/dictee-claude.md';
+
+function blocDictee(): HTMLElement {
+  const champ = el('input', {
+    type: 'password',
+    placeholder: 'sk-ant-…',
+    autocomplete: 'off',
+    spellcheck: 'false',
+  });
+  champ.value = etat.cleApi;
+  const aRanger = etat.notes.filter((n) => n.aRanger);
+  const enregistrerCle = async () => {
+    const cle = champ.value.trim();
+    if (!cle) {
+      await enregistrerCleApi('');
+      message('Clé retirée : la dictée va dans la remarque, sans Claude.');
+      rafraichir();
+      return;
+    }
+    try {
+      await verifierCle(cle, etat.reglages.modeleDictee);
+    } catch (e) {
+      message((e as Error).message, true);
+      return;
+    }
+    await enregistrerCleApi(cle);
+    message('Clé vérifiée et gardée sur ce téléphone.');
+    rafraichir();
+  };
+  const noms = (Object.keys(MODELES) as Modele[]).map(
+    (m) => `${MODELES[m].nom} (${MODELES[m].detail})`,
+  );
+  return el(
+    'section',
+    { class: 'carte' },
+    el('h2', {}, 'Dictée avec Claude'),
+    el(
+      'p',
+      {},
+      etat.cleApi
+        ? `Réglée : Claude range tes dictées dans les pastilles (modèle ${MODELES[etat.reglages.modeleDictee].nom}).`
+        : 'Pas réglée : la dictée va dans la remarque, sans pastilles.',
+    ),
+    el(
+      'p',
+      { class: 'doux' },
+      'Il faut une clé de l’API Anthropic (compte à part de l’abonnement Claude, payé à l’usage). ',
+      el('a', { href: NOTICE, target: '_blank', rel: 'noopener' }, 'Comment l’obtenir'),
+      '. La clé reste sur ce téléphone (jamais dans une sauvegarde). Seul le texte de tes dictées part chez Anthropic, avec la liste de tes parcelles.',
+    ),
+    el('label', {}, 'Clé de l’API', champ),
+    el(
+      'button',
+      { class: 'bouton principal', onclick: () => void enregistrerCle() },
+      'Vérifier et garder la clé',
+    ),
+    el('h3', {}, 'Modèle'),
+    pastilles(
+      noms,
+      [noms[(Object.keys(MODELES) as Modele[]).indexOf(etat.reglages.modeleDictee)]!],
+      (c) => {
+        const i = noms.indexOf(c[0] ?? '');
+        const m = (Object.keys(MODELES) as Modele[])[i];
+        // Retoucher le modèle choisi ne le décoche pas : il en faut toujours un.
+        if (!m) return rafraichir();
+        void changerReglages({ modeleDictee: m }).then(rafraichir);
+      },
+    ),
+    aRanger.length
+      ? el(
+          'details',
+          {},
+          el('summary', {}, `${aRanger.length} dictée${aRanger.length > 1 ? 's' : ''} à ranger`),
+          el(
+            'p',
+            { class: 'doux' },
+            'Ouvre-les avec du réseau : Claude les range, tu vérifies, tu enregistres.',
+          ),
+          el(
+            'ul',
+            { class: 'correspondances' },
+            ...aRanger.map((n) =>
+              el(
+                'li',
+                {},
+                el('a', { href: `#note/${n.id}` }, n.parcelle || 'Parcelle à choisir'),
+                el('span', { class: 'doux' }, dateCourte(n.date)),
+              ),
+            ),
+          ),
+        )
+      : null,
   );
 }

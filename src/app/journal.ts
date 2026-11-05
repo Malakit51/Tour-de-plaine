@@ -6,7 +6,19 @@ import { CATEGORIES } from '../agro/listes';
 import { lirePhoto } from '../registre/base';
 import type { Note } from '../registre/modele';
 import { el } from '../ui/dom';
-import { ajouterJours, dateCourte, dateLongue, jour, joursJusqua, pastilles } from './commun';
+import { elementsDictee } from './dictee-note';
+import {
+  ajouterJours,
+  dateCourte,
+  dateLongue,
+  jour,
+  joursJusqua,
+  message,
+  naviguer,
+  pastilles,
+} from './commun';
+import { resumerTour } from '../ia/claude';
+import { ecrireValeur, lireValeur } from '../registre/base';
 import { aRevoir, etat, parcelle, parcelles } from './etat';
 
 /** Pas vue depuis ce nombre de jours : la parcelle est signalée. */
@@ -52,6 +64,7 @@ export function ecranJournal(): HTMLElement {
             el('span', {}, dateLongue(j)),
             el('span', { class: 'doux' }, `${nbParcelles} parcelle${nbParcelles > 1 ? 's' : ''}`),
           ),
+          etat.cleApi ? resume(j, observations) : null,
           // Dans la journée, dans l'ordre du tour.
           ...[...observations].reverse().map(observation),
         ),
@@ -139,12 +152,10 @@ function observation(n: Note): HTMLElement {
   const vu = n.constats.length
     ? `${n.categorie ? n.categorie + ' : ' : ''}${n.constats.join(', ')}`
     : n.categorie;
-  return el(
-    'a',
-    {
-      class: `element note obs-journal gravite-${gravite}`,
-      href: `#parcelle/${encodeURIComponent(n.parcelle)}`,
-    },
+  // Toucher l'observation ouvre la fiche, sauf sur la dictée repliée (elle s'ouvre sur place).
+  const ligne = el(
+    'article',
+    { class: `element note obs-journal gravite-${gravite}` },
     el(
       'div',
       { class: 'element-corps' },
@@ -162,10 +173,81 @@ function observation(n: Note): HTMLElement {
       vu ? el('div', {}, vu) : null,
       n.gravite ? el('div', { class: 'gravite' }, n.gravite) : null,
       n.texte ? el('p', { class: 'texte-note' }, n.texte) : null,
+      ...elementsDictee(n),
       n.photos.length ? photos : null,
       n.aRevoir && !n.revu
         ? el('div', { class: 'doux' }, `À revoir le ${dateCourte(n.aRevoir)}`)
         : null,
     ),
   );
+  ligne.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest('details'))
+      naviguer(`#parcelle/${encodeURIComponent(n.parcelle)}`);
+  });
+  return ligne;
+}
+
+/** « Résumer ce tour » : compte rendu écrit par Claude, gardé pour ne pas le redemander. */
+function resume(j: string, notes: Note[]): HTMLElement {
+  const zone = el('div', { class: 'resume-tour' });
+  const cle = `resume/${j}`;
+  // Le résumé gardé est à refaire si les observations du jour ont changé depuis.
+  const empreinte = notes
+    .map((n) => n.id + n.modifieLe)
+    .sort()
+    .join('|');
+  const montrer = (texte: string, aJour: boolean) => {
+    zone.replaceChildren(
+      el('p', { class: 'texte-note' }, texte),
+      el(
+        'div',
+        { class: 'actions-resume' },
+        el(
+          'button',
+          {
+            class: 'bouton secondaire',
+            onclick: async () => {
+              const titre = `Tour de plaine du ${dateLongue(j)}`;
+              if (navigator.share)
+                await navigator
+                  .share({ title: titre, text: `${titre}\n\n${texte}` })
+                  .catch(() => {});
+              else await navigator.clipboard.writeText(texte).then(() => message('Résumé copié.'));
+            },
+          },
+          'Partager',
+        ),
+        aJour
+          ? null
+          : el(
+              'button',
+              { class: 'lien', onclick: () => void demander() },
+              'Refaire (observations modifiées)',
+            ),
+      ),
+    );
+  };
+  const demander = async () => {
+    zone.replaceChildren(el('p', { class: 'doux' }, 'Claude écrit le résumé du tour…'));
+    try {
+      const texte = await resumerTour(
+        dateLongue(j),
+        [...notes].reverse(),
+        (nom) => parcelle(nom)?.culture ?? '',
+        etat.cleApi,
+        etat.reglages.modeleDictee,
+      );
+      await ecrireValeur(cle, { texte, empreinte });
+      montrer(texte, true);
+    } catch (e) {
+      zone.replaceChildren(el('p', { class: 'doux' }, (e as Error).message), bouton());
+    }
+  };
+  const bouton = () =>
+    el('button', { class: 'bouton secondaire', onclick: () => void demander() }, 'Résumer ce tour');
+  zone.append(bouton());
+  void lireValeur<{ texte: string; empreinte: string }>(cle).then((r) => {
+    if (r) montrer(r.texte, r.empreinte === empreinte);
+  });
+  return zone;
 }

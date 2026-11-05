@@ -5,6 +5,7 @@ import { lirePhoto } from '../registre/base';
 import { dessinContour } from '../registre/geo';
 import type { Intervention, Note } from '../registre/modele';
 import { el, svg } from '../ui/dom';
+import { elementsDictee } from './dictee-note';
 import { icone, iconeCategorie, iconeType } from '../ui/icones';
 import { barreHaut, dateCourte, dose, echeance, joursJusqua, naviguer, nombre } from './commun';
 import {
@@ -233,6 +234,7 @@ function elementNote(n: Note): HTMLElement {
         : null,
       n.gravite ? el('div', { class: 'gravite' }, n.gravite) : null,
       n.texte ? el('p', { class: 'texte-note' }, n.texte) : null,
+      ...elementsDictee(n),
       n.photos.length ? photos : null,
       n.aRevoir
         ? el(

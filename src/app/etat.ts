@@ -1,6 +1,7 @@
 // État de l'appli en mémoire, chargé depuis le téléphone au démarrage et réenregistré à chaque
 // changement.
 
+import type { Modele } from '../ia/claude';
 import type { Habitudes } from '../agro/habitudes';
 import * as base from '../registre/base';
 import { rapprocher } from '../registre/correspondance';
@@ -22,6 +23,8 @@ export interface Reglages {
   sauvegardeLe: string;
   /** Écran Plaine : la liste des parcelles ou la carte. */
   vuePlaine: 'liste' | 'carte';
+  /** Modèle de Claude pour ranger les dictées (voir src/ia/claude.ts). */
+  modeleDictee: Modele;
 }
 
 export const etat = {
@@ -33,12 +36,22 @@ export const etat = {
   choixContours: {} as Record<string, string>,
   notes: [] as Note[],
   habitudes: {} as Habitudes,
-  reglages: { afficherPrevu: false, gps: false, sauvegardeLe: '', vuePlaine: 'liste' } as Reglages,
+  reglages: {
+    afficherPrevu: false,
+    gps: false,
+    sauvegardeLe: '',
+    vuePlaine: 'liste',
+    modeleDictee: 'haiku',
+  } as Reglages,
+  /** Clé de l'API Anthropic (dictée), vide si pas réglée. Jamais dans une sauvegarde. */
+  cleApi: '',
   /** Position GPS : [lat, lon] et précision (m). */
   position: null as { latLon: [number, number]; precision: number } | null,
 };
 
 const CLE_IMPORT = 'geofolia/';
+/** Clé de l'API Anthropic : écartée des sauvegardes (voir sauvegarde.ts). */
+export const CLE_API = 'cle-api';
 
 export async function charger(): Promise<void> {
   const cles = await base.clesValeurs();
@@ -54,6 +67,7 @@ export async function charger(): Promise<void> {
   etat.habitudes = (await base.lireValeur<Habitudes>('habitudes')) ?? {};
   etat.reglages = { ...etat.reglages, ...((await base.lireValeur<Reglages>('reglages')) ?? {}) };
   etat.notes = await base.toutesLesNotes();
+  etat.cleApi = (await base.lireValeur<string>(CLE_API)) ?? '';
   calculerRapprochement();
 }
 
@@ -157,4 +171,10 @@ export async function changerReglages(r: Partial<Reglages>): Promise<void> {
 export async function enregistrerHabitudes(h: Habitudes): Promise<void> {
   etat.habitudes = h;
   await base.ecrireValeur('habitudes', h);
+}
+
+export async function enregistrerCleApi(cle: string): Promise<void> {
+  etat.cleApi = cle.trim();
+  if (etat.cleApi) await base.ecrireValeur(CLE_API, etat.cleApi);
+  else await base.effacerValeur(CLE_API);
 }

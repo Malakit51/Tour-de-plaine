@@ -14,6 +14,19 @@ describe('assemblage des résultats', () => {
       'colza 6 feuilles',
     );
   });
+  it('phrase reprise avec un mot corrigé : la version corrigée remplace', () => {
+    expect(
+      assembler(['colza 6 feuilles grosse', 'Colza 6 feuilles grosses altises en bordure']),
+    ).toBe('Colza 6 feuilles grosses altises en bordure');
+  });
+  it('morceau qui reprend la fin : seule la suite est ajoutée', () => {
+    expect(
+      assembler(['colza 6 feuilles grosses altises', 'grosses altises en bordure du bois']),
+    ).toBe('colza 6 feuilles grosses altises en bordure du bois');
+  });
+  it('deux phrases qui commencent pareil restent deux phrases', () => {
+    expect(assembler(['le colza est beau', 'le blé aussi'])).toBe('le colza est beau le blé aussi');
+  });
   it('phrases successives (ordinateur) : mises bout à bout', () => {
     expect(assembler(['colza 6 feuilles', 'grosses altises en bordure'])).toBe(
       'colza 6 feuilles grosses altises en bordure',
@@ -52,12 +65,13 @@ class Fausse {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('écoute sur Android', () => {
-  it('phrase par phrase, sans répéter les mots d’une relance à l’autre', async () => {
+  it('écoute continue, sans répéter les mots, même d’une relance à l’autre', async () => {
     vi.stubGlobal('window', { webkitSpeechRecognition: Fausse });
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Linux; Android 14) Chrome/140' });
     Fausse.instances = [];
     Fausse.scenarios = [
-      [['colza'], ['colza 6 feuilles'], ['colza 6 feuilles', 'colza 6 feuilles']],
+      [['colza'], ['colza 6 feuilles'], ['colza 6 feuilles', 'colza 6 feuilles grosses']],
+      // Relance après un silence : Chrome redit parfois la fin de ce qui précède.
       [['grosses altises'], ['grosses altises en bordure']],
     ];
     const vus: string[] = [];
@@ -74,6 +88,6 @@ describe('écoute sur Android', () => {
     );
     await vi.waitFor(() => expect(fini).toBe(true));
     expect(vus.at(-1)).toBe('31 berl colza 6 feuilles grosses altises en bordure');
-    expect(Fausse.instances[0]!.continuous).toBe(false);
+    expect(Fausse.instances[0]!.continuous).toBe(true);
   });
 });

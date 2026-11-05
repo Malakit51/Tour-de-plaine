@@ -311,7 +311,8 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
   const avecClaude = () => etat.cleApi !== '';
   const champDictee = el('textarea', {
     rows: '3',
-    placeholder: 'Ce que tu dictes s’écrit ici (tu peux corriger)',
+    placeholder:
+      'Ce que tu dictes s’écrit ici. Tu peux aussi toucher ici et dicter avec le micro du clavier.',
   });
   champDictee.value = n.dictee ?? '';
   const etatDictee = el('p', { class: 'doux etat-dictee' });

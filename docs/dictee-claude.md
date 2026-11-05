@@ -16,7 +16,14 @@ photos, ni position GPS.
    abonnement Claude, c'est un compte d'API distinct.
 3. Si on te demande le type de compte : **individuel**, pour ton propre usage.
 
-## 2. Acheter un peu de crédit
+## 2. Les crédits : forfait Team, ou achat
+
+**Avec un forfait Claude Team** : la Console propose « Votre forfait Team inclut 200 $US de crédits API par mois ».
+Touche **Associer et récupérer 200 $US** (lis les conditions affichées en dessous) : **rien à acheter**, passe
+directement à l'étape 4. Ces crédits sont mensuels (ce qui n'est pas utilisé expire à la fin de la période) et
+servent avant tout crédit acheté. 200 $ par mois couvrent très largement la dictée, même avec Opus.
+
+**Sinon, acheter un peu de crédit :**
 
 1. Menu **Settings › Billing** (ou « Facturation »).
 2. Ajoute ta carte bancaire, puis **Buy credits** : le **plus petit montant proposé** suffit largement (avec

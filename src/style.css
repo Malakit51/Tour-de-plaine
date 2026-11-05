@@ -885,6 +885,23 @@ label > input[type='password'] {
   flex-direction: column;
   gap: 8px;
 }
+.resume-replie > summary {
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 36px;
+  color: var(--vert);
+}
+.resume-replie {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.resume-replie .actions-resume {
+  margin-top: 8px;
+}
+.lien.danger {
+  color: var(--rouge);
+}
 .resume-tour .texte-note {
   margin: 0;
   padding: 12px 14px;

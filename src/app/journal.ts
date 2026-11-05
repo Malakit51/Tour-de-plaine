@@ -16,7 +16,7 @@ import {
   pastilles,
 } from './commun';
 import { resumerTour } from '../ia/claude';
-import { ecrireValeur, lireValeur } from '../registre/base';
+import { ecrireValeur, effacerValeur, lireValeur } from '../registre/base';
 import { aRevoir, etat, parcelle, parcelles } from './etat';
 
 /** Pas vue depuis ce nombre de jours : la parcelle est signalée. */
@@ -143,9 +143,15 @@ function resume(j: string, notes: Note[]): HTMLElement {
     .map((n) => n.id + n.modifieLe)
     .sort()
     .join('|');
-  const montrer = (texte: string, aJour: boolean) => {
-    zone.replaceChildren(
-      el('p', { class: 'texte-note' }, texte),
+  type Garde = { texte: string; empreinte: string; replie?: boolean };
+  // Résumé repliable (le repli est gardé) et supprimable.
+  const montrer = (r: Garde) => {
+    const titre = `Tour de plaine du ${dateLongue(j)}`;
+    const bloc = el(
+      'details',
+      { class: 'resume-replie' },
+      el('summary', {}, 'Résumé du tour'),
+      el('p', { class: 'texte-note' }, r.texte),
       el(
         'div',
         { class: 'actions-resume' },
@@ -154,25 +160,40 @@ function resume(j: string, notes: Note[]): HTMLElement {
           {
             class: 'bouton secondaire',
             onclick: async () => {
-              const titre = `Tour de plaine du ${dateLongue(j)}`;
               if (navigator.share)
                 await navigator
-                  .share({ title: titre, text: `${titre}\n\n${texte}` })
+                  .share({ title: titre, text: `${titre}\n\n${r.texte}` })
                   .catch(() => {});
-              else await navigator.clipboard.writeText(texte).then(() => message('Résumé copié.'));
+              else
+                await navigator.clipboard.writeText(r.texte).then(() => message('Résumé copié.'));
             },
           },
           'Partager',
         ),
-        aJour
+        r.empreinte === empreinte
           ? null
           : el(
               'button',
               { class: 'lien', onclick: () => void demander() },
               'Refaire (observations modifiées)',
             ),
+        el(
+          'button',
+          {
+            class: 'lien danger',
+            onclick: async () => {
+              if (!confirm('Supprimer ce résumé ? Tu pourras en redemander un.')) return;
+              await effacerValeur(cle);
+              zone.replaceChildren(bouton());
+            },
+          },
+          'Supprimer',
+        ),
       ),
     );
+    bloc.open = !r.replie;
+    bloc.addEventListener('toggle', () => void ecrireValeur(cle, { ...r, replie: !bloc.open }));
+    zone.replaceChildren(bloc);
   };
   const demander = async () => {
     zone.replaceChildren(el('p', { class: 'doux' }, 'Claude écrit le résumé du tour…'));
@@ -184,8 +205,9 @@ function resume(j: string, notes: Note[]): HTMLElement {
         etat.cleApi,
         etat.reglages.modeleDictee,
       );
-      await ecrireValeur(cle, { texte, empreinte });
-      montrer(texte, true);
+      const r: Garde = { texte, empreinte };
+      await ecrireValeur(cle, r);
+      montrer(r);
     } catch (e) {
       zone.replaceChildren(el('p', { class: 'doux' }, (e as Error).message), bouton());
     }
@@ -193,8 +215,8 @@ function resume(j: string, notes: Note[]): HTMLElement {
   const bouton = () =>
     el('button', { class: 'bouton secondaire', onclick: () => void demander() }, 'Résumer ce tour');
   zone.append(bouton());
-  void lireValeur<{ texte: string; empreinte: string }>(cle).then((r) => {
-    if (r) montrer(r.texte, r.empreinte === empreinte);
+  void lireValeur<Garde>(cle).then((r) => {
+    if (r) montrer(r);
   });
   return zone;
 }

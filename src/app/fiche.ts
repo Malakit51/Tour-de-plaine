@@ -1,12 +1,11 @@
 // Fiche d'une parcelle : ce qu'elle porte, son contour, et la frise de tout ce qui s'y est passé
 // (notes du champ et interventions Geofolia), la plus récente en haut.
 
-import { lirePhoto } from '../registre/base';
 import { dessinContour } from '../registre/geo';
 import type { Intervention, Note } from '../registre/modele';
 import { el, svg } from '../ui/dom';
-import { elementsDictee } from './dictee-note';
-import { icone, iconeCategorie, iconeType } from '../ui/icones';
+import { elementObservation } from './observation';
+import { icone, iconeCategorie } from '../ui/icones';
 import { barreHaut, dateCourte, dose, echeance, joursJusqua, naviguer, nombre } from './commun';
 import {
   changerReglages,
@@ -172,7 +171,7 @@ function frise(notes: Note[], interventions: Intervention[], nom: string): HTMLE
   const recentes = <T extends { date: string }>(l: T[]) =>
     [...l].sort((a, b) => b.date.localeCompare(a.date));
   const groupes: [string, HTMLElement[]][] = [
-    ['Mes notes', recentes(notes).map(elementNote)],
+    ['Mes notes', recentes(notes).map((n) => elementObservation(n, false))],
     ...[...RUBRIQUES.map(([r]) => r), 'Autres interventions'].map((r): [string, HTMLElement[]] => [
       r,
       recentes(interventions.filter((i) => rubrique(i.categorie) === r)).map((i) =>
@@ -192,71 +191,6 @@ function frise(notes: Note[], interventions: Intervention[], nom: string): HTMLE
     section.append(bloc);
   }
   return section;
-}
-
-function elementNote(n: Note): HTMLElement {
-  const photos = el('div', { class: 'vignettes' });
-  for (const id of n.photos) {
-    void lirePhoto(id).then((ph) => {
-      if (!ph) return;
-      const url = URL.createObjectURL(ph.image);
-      photos.append(
-        el('img', { src: url, alt: 'Photo', class: 'vignette', onclick: () => agrandir(url) }),
-      );
-    });
-  }
-  return el(
-    'article',
-    { class: `element note gravite-${gravite(n.gravite)}` },
-    el('div', { class: 'element-icone' }, icone(iconeType(n.type), 20)),
-    el(
-      'div',
-      { class: 'element-corps' },
-      el(
-        'div',
-        { class: 'element-tete' },
-        el('strong', {}, n.type === 'Observation' ? 'Observation' : n.type),
-        el('span', { class: 'doux' }, `${dateCourte(n.date)} ${n.date.slice(11, 16)}`),
-        el(
-          'button',
-          { class: 'lien modifier', onclick: () => naviguer(`#note/${n.id}`) },
-          'Modifier',
-        ),
-      ),
-      n.stade ? el('div', {}, `Stade : ${n.stade}`) : null,
-      n.constats.length || n.categorie
-        ? el(
-            'div',
-            {},
-            n.categorie ? `${n.categorie}${n.constats.length ? ' : ' : ''}` : '',
-            n.constats.join(', '),
-          )
-        : null,
-      n.gravite ? el('div', { class: 'gravite' }, n.gravite) : null,
-      n.texte ? el('p', { class: 'texte-note' }, n.texte) : null,
-      ...elementsDictee(n),
-      n.photos.length ? photos : null,
-      n.aRevoir
-        ? el(
-            'div',
-            { class: 'doux' },
-            n.revu
-              ? `Revu (prévu le ${dateCourte(n.aRevoir)})`
-              : `À revoir le ${dateCourte(n.aRevoir)}`,
-          )
-        : null,
-    ),
-  );
-}
-
-function gravite(g: string): string {
-  return g === 'Intervenir'
-    ? 'forte'
-    : g === 'À surveiller'
-      ? 'moyenne'
-      : g === 'Faible'
-        ? 'faible'
-        : 'aucune';
 }
 
 export function elementIntervention(
@@ -310,16 +244,6 @@ export function elementIntervention(
         : null,
     ),
   );
-}
-
-function agrandir(url: string): void {
-  const voile: HTMLElement = el(
-    'div',
-    { class: 'voile-photo' },
-    el('img', { src: url, alt: 'Photo' }),
-  );
-  voile.addEventListener('click', () => voile.remove());
-  document.body.append(voile);
 }
 
 function choixContour(nom: string): HTMLElement {

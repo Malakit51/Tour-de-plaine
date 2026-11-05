@@ -51,17 +51,3 @@ export function iconeCategorie(categorie: string): Icone {
   if (/sol/i.test(categorie)) return 'sol';
   return 'autre';
 }
-
-/** Icône d'une note selon son type. */
-export function iconeType(type: string): Icone {
-  return (
-    (
-      {
-        Observation: 'observation',
-        Semis: 'semis',
-        Traitement: 'traitement',
-        Fertilisation: 'fertilisation',
-      } as const
-    )[type as 'Observation'] ?? 'autre'
-  );
-}

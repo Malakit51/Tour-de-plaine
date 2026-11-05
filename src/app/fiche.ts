@@ -187,7 +187,8 @@ function frise(notes: Note[], interventions: Intervention[], nom: string): HTMLE
       el('summary', {}, titre, el('span', { class: 'compte' }, String(elements.length))),
       ...elements,
     );
-    bloc.open = true;
+    // Mes notes dépliées ; les interventions Geofolia repliées (demandé le 05/11/2026).
+    bloc.open = titre === 'Mes notes';
     section.append(bloc);
   }
   return section;

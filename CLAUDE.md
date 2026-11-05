@@ -38,6 +38,8 @@ Attention : le `.gitignore` d'Assolmax-perso ignore tout dossier nommé `donnees
 
 Vite + TypeScript sans framework (comme Jalon), `npm run check` (prettier, tsc, vitest). IndexedDB (`src/registre/base.ts`) : notes, photos (réduites à 1600 px JPEG), valeurs (imports par campagne `geofolia/AAAA`, `jalon`, `choix-contours`, `habitudes`, `reglages`). Navigation par l'adresse (`#plaine`, `#parcelle/<nom>`, `#noter[/<nom>]`, `#note/<id>`, `#revoir`, `#interventions`, `#reglages`) : le retour du téléphone fonctionne. Raccourcis sur l'icône (manifeste) : « Nouvelle note », « À revoir ».
 
+Retouches du 05/11/2026 (Maxime, au champ) : un seul précédent dans la fiche ; onglet actif marqué d'une pastille verte ; historique de la fiche rangé par rubrique (Mes notes, Semis, Travail du sol, Engrais, Traitements, Autres) ; Plaine en deux vues, Liste ou Carte (`src/app/carte.ts` : photo IGN comme Jalon, parcelles colorées par culture, bord ambre si une note est à revoir, toucher = fiche). Question ouverte : l'onglet Interventions fait doublon avec les fiches.
+
 Installation : le menu ⋮ de Chrome dit l'appli « déjà installée » (Jalon est installé à la même adresse malakit51.github.io). Comme dans Valeur engrais, la page propose elle-même « Installer » (bandeau en haut de Plaine et de Réglages, `src/app/installation.ts`, événement `beforeinstallprompt`) : cette fenêtre-là ne fait pas ce test.
 
 Fichiers repris de Jalon : `src/sources/taskdata.ts` (lecture du TASKDATA, sans modification), `src/formats/dezip.ts`, `src/ui/dom.ts`, la direction visuelle « Plein champ ».
@@ -50,6 +52,5 @@ Dépôt public Malakit51/Tour-de-plaine (créé le 05/11/2026), publié par GitH
 
 - Bouton « Dicter à Claude » et import des notes de Claude (voir Décisions).
 - Sauvegarde Google Drive automatique (reprendre `drive.ts` de Jalon, même ID client possible : même site).
-- Carte de la plaine (Leaflet, comme Jalon) avec les parcelles colorées par culture.
 - Recevoir le ZIP Geofolia par le bouton Partager d'Android (Web Share Target).
 - Mode « Tour » : parcours enregistré et compte rendu des parcelles vues.

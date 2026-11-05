@@ -20,6 +20,8 @@ export interface Reglages {
   gps: boolean;
   /** Dernière sauvegarde dans un fichier (ISO). */
   sauvegardeLe: string;
+  /** Écran Plaine : la liste des parcelles ou la carte. */
+  vuePlaine: 'liste' | 'carte';
 }
 
 export const etat = {
@@ -31,7 +33,7 @@ export const etat = {
   choixContours: {} as Record<string, string>,
   notes: [] as Note[],
   habitudes: {} as Habitudes,
-  reglages: { afficherPrevu: false, gps: false, sauvegardeLe: '' } as Reglages,
+  reglages: { afficherPrevu: false, gps: false, sauvegardeLe: '', vuePlaine: 'liste' } as Reglages,
   /** Position GPS : [lat, lon] et précision (m). */
   position: null as { latLon: [number, number]; precision: number } | null,
 };

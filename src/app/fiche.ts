@@ -6,16 +6,7 @@ import { dessinContour } from '../registre/geo';
 import type { Intervention, Note } from '../registre/modele';
 import { el, svg } from '../ui/dom';
 import { icone, iconeCategorie, iconeType } from '../ui/icones';
-import {
-  barreHaut,
-  dateCourte,
-  dose,
-  echeance,
-  joursJusqua,
-  moisLong,
-  naviguer,
-  nombre,
-} from './commun';
+import { barreHaut, dateCourte, dose, echeance, joursJusqua, naviguer, nombre } from './commun';
 import {
   changerReglages,
   choisirContour,
@@ -56,7 +47,7 @@ export function ecranFiche(nom: string): HTMLElement {
         ? `${dateCourte(semis.date)}${semis.produits.length ? ' · ' + semis.produits.map((x) => x.nom).join(', ') : ''}`
         : 'pas encore',
     ),
-    ...ligne('Précédents', p.precedents.filter(Boolean).slice(0, 3).join(' ← ') || '—'),
+    ...ligne('Précédent', p.precedents[0] || '—'),
     ...ligne('Sol', p.sol || '—'),
   );
   page.append(
@@ -157,26 +148,47 @@ function resume(n: Note): string {
   return [n.stade, n.constats.join(', '), n.gravite].filter(Boolean).join(' · ') || n.texte;
 }
 
-type Element = { date: string; note?: Note; intervention?: Intervention };
+/** Rubriques des interventions Geofolia dans l'historique, dans cet ordre (après « Mes notes »). */
+const RUBRIQUES: [string, RegExp][] = [
+  ['Semis', /semis/i],
+  ['Travail du sol', /sol/i],
+  ['Engrais', /fertili/i],
+  ['Traitements', /traitement/i],
+];
 
+export function rubrique(categorie: string): string {
+  return RUBRIQUES.find(([, re]) => re.test(categorie))?.[0] ?? 'Autres interventions';
+}
+
+/** Historique rangé par rubrique (notes, semis, travail du sol, engrais, traitements), le plus récent en haut. */
 function frise(notes: Note[], interventions: Intervention[], nom: string): HTMLElement {
   const doublons = doublonsPossibles(interventions);
-  const elements: Element[] = [
-    ...notes.map((note) => ({ date: note.date, note })),
-    ...interventions.map((intervention) => ({ date: intervention.date, intervention })),
-  ].sort((a, b) => b.date.localeCompare(a.date));
   const section = el('section', { class: 'frise' }, el('h2', {}, 'Historique'));
-  if (elements.length === 0) {
+  if (notes.length === 0 && interventions.length === 0) {
     section.append(el('p', { class: 'doux' }, 'Rien de noté pour l’instant sur cette parcelle.'));
     return section;
   }
-  let mois = '';
-  for (const e of elements) {
-    const m = moisLong(e.date);
-    if (m !== mois) section.append(el('h3', { class: 'mois' }, (mois = m)));
-    section.append(
-      e.note ? elementNote(e.note) : elementIntervention(e.intervention!, nom, doublons),
+  const recentes = <T extends { date: string }>(l: T[]) =>
+    [...l].sort((a, b) => b.date.localeCompare(a.date));
+  const groupes: [string, HTMLElement[]][] = [
+    ['Mes notes', recentes(notes).map(elementNote)],
+    ...[...RUBRIQUES.map(([r]) => r), 'Autres interventions'].map((r): [string, HTMLElement[]] => [
+      r,
+      recentes(interventions.filter((i) => rubrique(i.categorie) === r)).map((i) =>
+        elementIntervention(i, nom, doublons),
+      ),
+    ]),
+  ];
+  for (const [titre, elements] of groupes) {
+    if (elements.length === 0) continue;
+    const bloc = el(
+      'details',
+      { class: 'rubrique' },
+      el('summary', {}, titre, el('span', { class: 'compte' }, String(elements.length))),
+      ...elements,
     );
+    bloc.open = true;
+    section.append(bloc);
   }
   return section;
 }

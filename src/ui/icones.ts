@@ -25,6 +25,8 @@ const TRACES = {
   autre: '<circle cx="12" cy="12" r="8"/><path d="M12 8v5M12 16v.5"/>',
   sauvegarde: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
   ouvrir: '<path d="M4 6h6l2 2h8v11H4z"/>',
+  liste: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  carte: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>',
 } as const;
 
 export type Icone = keyof typeof TRACES;

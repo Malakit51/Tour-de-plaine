@@ -335,6 +335,94 @@ label > select {
   color: var(--vert);
 }
 
+/* ---------- Plaine : liste ou carte ---------- */
+.segments {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  border-radius: 999px;
+  background: var(--seg);
+}
+.segment {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--doux);
+  font-weight: 700;
+  cursor: pointer;
+}
+.segment[aria-pressed='true'] {
+  background: var(--vert-fond);
+  color: var(--sur-vert);
+  box-shadow: var(--ombre);
+}
+.bloc-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.carte-plaine {
+  position: relative;
+  height: calc(100dvh - 330px);
+  min-height: 300px;
+  border-radius: var(--rayon);
+  overflow: hidden;
+  box-shadow: var(--ombre);
+  background: #fff;
+}
+.carte-plaine .leaflet-tooltip.etiquette {
+  background: #000a;
+  color: #fff;
+  border: none;
+  box-shadow: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 1px 6px;
+}
+.carte-plaine .leaflet-tooltip.etiquette::before {
+  display: none;
+}
+.bouton-carte {
+  position: absolute;
+  right: 12px;
+  bottom: 24px;
+  z-index: 1000;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--ombre-flottante);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.9rem;
+}
+.legende span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legende i {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid #0003;
+}
+
 /* ---------- Plaine ---------- */
 .bandeau-gps {
   display: flex;
@@ -548,6 +636,32 @@ label > select {
   font-weight: 700;
   font-size: 0.9rem;
 }
+.rubrique {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rubrique > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid var(--ligne-douce);
+}
+.rubrique > summary .compte {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--seg);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.rubrique > .element {
+  margin-top: 8px;
+}
 .prevu > summary {
   font-weight: 700;
 }
@@ -676,13 +790,24 @@ label > select {
   font-size: 0.78rem;
   color: var(--doux);
 }
+/* Onglet où l'on est : icône dans une pastille verte pleine, nom en gras (bien visible au soleil). */
 .onglet[aria-current='page'] {
-  color: var(--vert);
+  color: var(--fg);
   font-weight: 700;
 }
+.onglet[aria-current='page'] .icone {
+  box-sizing: content-box;
+  padding: 4px 18px;
+  border-radius: 999px;
+  background: var(--vert-fond);
+  color: var(--sur-vert);
+}
+.onglet:not([aria-current='page']) .icone {
+  padding: 4px 0;
+}
+/* « Noter » est un bouton, pas un onglet : son nom reste discret. */
 .onglet.noter {
-  color: var(--vert);
-  font-weight: 700;
+  color: var(--doux);
 }
 .onglet.noter .rond {
   display: flex;

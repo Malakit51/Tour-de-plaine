@@ -5,7 +5,8 @@ import { el } from '../ui/dom';
 import { icone } from '../ui/icones';
 import { dateCourte, joursJusqua, naviguer, nombre, pastilles } from './commun';
 import { bandeauInstallation } from './installation';
-import { aRevoir, etat, importCourant, notesDe, parcelles } from './etat';
+import { vueCarte } from './carte';
+import { aRevoir, changerReglages, etat, importCourant, notesDe, parcelles } from './etat';
 import {
   activerGps,
   distanceLisible,
@@ -61,13 +62,39 @@ export function ecranPlaine(): HTMLElement {
     return page;
   }
 
+  // Deux boutons : la liste des parcelles ou la carte de la plaine.
+  const enCarte = etat.reglages.vuePlaine === 'carte';
+  const bascule = (v: 'liste' | 'carte') =>
+    el(
+      'button',
+      {
+        class: 'segment',
+        'aria-pressed': String(etat.reglages.vuePlaine === v),
+        onclick: async () => {
+          if (etat.reglages.vuePlaine === v) return;
+          await changerReglages({ vuePlaine: v });
+          naviguer(location.hash, true);
+        },
+      },
+      icone(v === 'liste' ? 'liste' : 'carte', 20),
+      v === 'liste' ? 'Liste' : 'Carte',
+    );
+  page.append(el('div', { class: 'segments' }, bascule('liste'), bascule('carte')));
+
   const bandeau = el('section', { class: 'bandeau-gps' });
   const liste = el('ul', { class: 'liste-parcelles' });
   const dessiner = () => {
     dessinerBandeau(bandeau);
-    dessinerListe(liste);
+    if (!enCarte) dessinerListe(liste);
   };
   dessiner();
+  if (enCarte) {
+    page.append(bandeau, vueCarte());
+    const desabonner = surPosition(() =>
+      page.isConnected ? dessinerBandeau(bandeau) : desabonner(),
+    );
+    return page;
+  }
 
   const champRecherche = el('input', {
     type: 'search',

@@ -42,7 +42,8 @@ crédit acheté d'avance et sans rechargement automatique, tu ne peux de toute f
 ## 4. Créer la clé
 
 1. Menu **API Keys** (ou « Clés API ») › **Create Key**.
-2. Nom : `Tour de plaine - téléphone`.
+2. Nom : `Tour de plaine - téléphone`. **Expire** : choisis la durée la plus longue proposée (1 an, ou « Jamais »),
+   sinon la dictée s'arrête au bout de 30 jours. Compte lié et portée : laisse ce qui est proposé.
 3. **Copie la clé** : elle commence par `sk-ant-` et **ne s'affiche qu'une fois**. Envoie-la-toi (par exemple dans
    un mail à toi-même) pour la coller sur le téléphone, puis supprime ce mail.
 
@@ -70,7 +71,7 @@ Dans le **Journal**, **Résumer ce tour** écrit le compte rendu de la journée,
 
 ## En cas de problème
 
-- **« Clé refusée »** : clé mal copiée, ou supprimée dans la Console. Recrées-en une.
+- **« Clé refusée ou expirée »** : clé mal copiée, arrivée à expiration, ou supprimée dans la Console. Recrées-en une.
 - **« Crédit épuisé »** : rachète du crédit (Settings › Billing).
 - **Téléphone perdu** : dans la Console, **API Keys**, supprime la clé ; personne ne pourra plus s'en servir.
 - **« La dictée vocale a besoin du réseau »** : la reconnaissance de la voix de Chrome ne marche pas toujours hors

@@ -52,7 +52,9 @@ async function traduire(e: unknown): Promise<ErreurClaude> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   if (e instanceof ErreurClaude) return e;
   if (e instanceof Anthropic.AuthenticationError)
-    return new ErreurClaude('Clé refusée par Anthropic : vérifie-la dans Réglages › Dictée.');
+    return new ErreurClaude(
+      'Clé refusée ou expirée : crées-en une nouvelle dans la Console, puis colle-la dans Réglages › Dictée.',
+    );
   if (e instanceof Anthropic.PermissionDeniedError)
     return new ErreurClaude('Cette clé n’a pas le droit d’utiliser ce modèle.');
   if (e instanceof Anthropic.RateLimitError)

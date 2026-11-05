@@ -96,7 +96,6 @@ export function vueCarte(): HTMLElement {
         fillColor: couleurCulture(p.culture),
         fillOpacity: 0.5,
       }).addTo(carte);
-      forme.bindTooltip(p.nom, { permanent: true, direction: 'center', className: 'etiquette' });
       forme.on('click', () => naviguer(`#parcelle/${encodeURIComponent(p.nom)}`));
       limites.extend(forme.getBounds());
     }

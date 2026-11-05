@@ -376,18 +376,6 @@ label > select {
   box-shadow: var(--ombre);
   background: #fff;
 }
-.carte-plaine .leaflet-tooltip.etiquette {
-  background: #000a;
-  color: #fff;
-  border: none;
-  box-shadow: none;
-  font-weight: 700;
-  font-size: 0.8rem;
-  padding: 1px 6px;
-}
-.carte-plaine .leaflet-tooltip.etiquette::before {
-  display: none;
-}
 .bouton-carte {
   position: absolute;
   right: 12px;

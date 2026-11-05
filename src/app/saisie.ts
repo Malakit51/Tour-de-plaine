@@ -344,7 +344,12 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
       (t) => {
         champ.value = t;
         if (champ === texte) n.texte = t;
-        else n.dictee = t;
+        else {
+          n.dictee = t;
+          // Le texte brut est caché (il est souvent approximatif) : on montre seulement qu'il arrive.
+          const mots = t.split(/\s+/).filter(Boolean).length;
+          etatDictee.textContent = `Je t’écoute… ${mots} mot${mots > 1 ? 's' : ''}. Touche « Arrêter » quand tu as fini.`;
+        }
       },
       (erreur) => {
         ecoute = null;
@@ -414,7 +419,18 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     zoneDictee.append(el('h2', {}, 'Dictée'));
     if (voixDisponible()) zoneDictee.append(boutonDicter);
     if (avecClaude()) {
-      zoneDictee.append(champDictee, boutonRanger, etatDictee, autreModele);
+      // Texte brut replié : il n'est utile que pour corriger à la main, ou dicter au micro du clavier.
+      zoneDictee.append(
+        etatDictee,
+        boutonRanger,
+        autreModele,
+        el(
+          'details',
+          { class: 'dictee-brute' },
+          el('summary', {}, 'Voir ou corriger le texte dicté'),
+          champDictee,
+        ),
+      );
     } else {
       zoneDictee.append(
         el(

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Tour de plaine : une parcelle à rangs vue d'en haut, le chemin du tour en pointillés blancs,
+       et le point ambre de l'observation. -->
+  <rect width="512" height="512" rx="112" fill="#1e5631"/>
+  <g transform="rotate(-12 256 256)">
+    <rect x="108" y="118" width="296" height="276" rx="26" fill="#7cc48f"/>
+    <g stroke="#1e5631" stroke-width="14" stroke-linecap="round" opacity="0.55">
+      <path d="M146 170h220M146 214h220M146 258h220M146 302h220M146 346h220"/>
+    </g>
+  </g>
+  <path d="M84 300C70 170 170 82 300 92c120 9 160 118 126 210-30 82-140 124-230 98" fill="none"
+        stroke="#ffffff" stroke-width="20" stroke-linecap="round" stroke-dasharray="2 38"/>
+  <circle cx="318" cy="246" r="44" fill="#f5a524" stroke="#ffffff" stroke-width="14"/>
+</svg>

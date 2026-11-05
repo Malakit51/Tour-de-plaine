@@ -1,0 +1,8 @@
+node_modules/
+dist/
+# Données réelles (exports Geofolia, TASKDATA de Jalon, sauvegardes) : jamais dans le dépôt.
+donnees_locales/
+*.zip
+TASKDATA*
+*.XML
+tour-de-plaine-sauvegarde*.json

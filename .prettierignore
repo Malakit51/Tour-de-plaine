@@ -1,0 +1,4 @@
+dist/
+node_modules/
+donnees_locales/
+package-lock.json

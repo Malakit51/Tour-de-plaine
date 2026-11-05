@@ -24,7 +24,8 @@ function ecran(adresse: string): { page: HTMLElement; onglet: string | null } {
   const param = reste.length ? decodeURIComponent(reste.join('/')) : null;
   switch (route) {
     case 'parcelle':
-      return { page: ecranFiche(param ?? ''), onglet: null };
+      // La fiche s'ouvre depuis la Plaine : l'onglet Plaine reste marqué.
+      return { page: ecranFiche(param ?? ''), onglet: '#plaine' };
     case 'noter':
       return { page: ecranSaisie(param, null), onglet: null };
     case 'note':
@@ -86,7 +87,8 @@ export function afficher(): void {
   derniereAdresse = adresse;
   const { page, onglet } = ecran(adresse);
   app.replaceChildren(page);
-  if (onglet) app.append(barreOnglets(onglet));
-  document.body.classList.toggle('avec-onglets', onglet !== null);
+  // La barre d'onglets reste toujours affichée (demandé le 05/11/2026), aussi pendant une saisie.
+  app.append(barreOnglets(onglet ?? ''));
+  document.body.classList.add('avec-onglets');
   window.scrollTo(0, defilement);
 }

@@ -915,8 +915,9 @@ label > input[type='password'] {
 }
 .barre-enregistrer {
   position: sticky;
-  bottom: 0;
-  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  /* Juste au-dessus de la barre d'onglets. */
+  bottom: calc(var(--onglets) + env(safe-area-inset-bottom));
+  padding: 10px 0;
   background: linear-gradient(transparent, var(--bg) 30%);
 }
 

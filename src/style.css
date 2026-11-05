@@ -694,6 +694,62 @@ label > input[type='password'] {
 }
 .obs-journal {
   text-decoration: none;
+  cursor: pointer;
+  /* Appui long : pas de sélection de texte ni de menu du navigateur. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.etiquettes-obs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.etiquette-obs {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--seg);
+  font-size: 0.9rem;
+}
+.etiquette-obs.gravite-moyenne {
+  background: var(--ambre);
+  color: #2b1d00;
+  font-weight: 700;
+}
+.etiquette-obs.gravite-forte {
+  background: var(--rouge);
+  color: #fff;
+  font-weight: 700;
+}
+.etiquette-obs.revoir {
+  background: var(--ambre-fond);
+  color: var(--ambre-texte);
+}
+.voile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #0007;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.menu-bas {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+}
+.menu-bas p {
+  margin: 0;
+}
+.menu-bas .bouton.danger {
+  align-self: stretch;
 }
 .vignette.petite {
   width: 64px;

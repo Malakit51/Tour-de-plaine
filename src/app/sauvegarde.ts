@@ -60,7 +60,7 @@ export async function fabriquerSauvegarde(maintenant = new Date()): Promise<Blob
  */
 export async function reprendreSauvegarde(
   texte: string,
-): Promise<{ notes: number; photos: number }> {
+): Promise<{ notes: number; photos: number; pastilles: boolean }> {
   let s: FichierSauvegarde;
   try {
     s = JSON.parse(texte) as FichierSauvegarde;
@@ -82,5 +82,5 @@ export async function reprendreSauvegarde(
   }
   for (const p of s.photos ?? [])
     await base.ecrirePhoto({ id: p.id, image: depuisBase64(p.base64, p.type) });
-  return { notes, photos: s.photos?.length ?? 0 };
+  return { notes, photos: s.photos?.length ?? 0, pastilles: 'pastilles' in (s.valeurs ?? {}) };
 }

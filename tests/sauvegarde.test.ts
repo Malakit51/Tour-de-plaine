@@ -36,7 +36,7 @@ describe('sauvegarde dans un fichier', () => {
     await base.ecrireValeur('choix-contours', {});
     const r = await reprendreSauvegarde(fichier);
 
-    expect(r).toEqual({ notes: 0, photos: 1 });
+    expect(r).toEqual({ notes: 0, photos: 1, pastilles: false });
     expect((await base.toutesLesNotes())[0]!.texte).toBe('plus récente');
     const photo = await base.lirePhoto('p1');
     expect([...new Uint8Array(await photo!.image.arrayBuffer())]).toEqual([1, 2, 3]);

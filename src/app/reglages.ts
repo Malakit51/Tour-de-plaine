@@ -257,7 +257,15 @@ function blocSauvegarde(): HTMLElement {
           try {
             const r = await reprendreSauvegarde(await f.text());
             await charger();
-            message(`Sauvegarde reprise : ${r.notes} notes, ${r.photos} photos.`);
+            // Dire ce qui a été repris (un fichier de pastilles n'a ni notes ni photos).
+            const repris = [
+              r.notes ? `${r.notes} observation${r.notes > 1 ? 's' : ''}` : '',
+              r.photos ? `${r.photos} photo${r.photos > 1 ? 's' : ''}` : '',
+              r.pastilles ? 'tes listes de pastilles' : '',
+            ].filter(Boolean);
+            message(
+              repris.length ? `Repris : ${repris.join(', ')}.` : 'Rien de nouveau dans ce fichier.',
+            );
             rafraichir();
           } catch (e) {
             message((e as Error).message, true);

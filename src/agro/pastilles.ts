@@ -17,7 +17,7 @@ const EXEMPLE: Record<Groupe, string> = {
   colza: 'Colza',
   betterave: 'Betteraves',
   mais: 'Maïs',
-  oeillette: 'Œillette',
+  oeillette: 'Oeillette', // « Œ » ne se décompose pas en « oe » : groupe() ne le reconnaîtrait pas
   luzerne: 'Luzerne',
   proteagineux: 'Pois',
   autre: '',

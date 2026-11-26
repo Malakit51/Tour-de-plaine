@@ -242,24 +242,7 @@ function blocSauvegarde(): HTMLElement {
       'button',
       {
         class: 'bouton principal',
-        onclick: async () => {
-          const blob = await fabriquerSauvegarde();
-          const nom = `tour-de-plaine-sauvegarde-${jour()}.json`;
-          const fichier = new File([blob], nom, { type: 'application/json' });
-          // Sur le téléphone : « Partager » propose Drive, Gmail… ; sinon, téléchargement.
-          if (navigator.canShare?.({ files: [fichier] })) {
-            try {
-              await navigator.share({ files: [fichier], title: nom });
-            } catch {
-              return;
-            }
-          } else {
-            const a = el('a', { href: URL.createObjectURL(blob), download: nom });
-            a.click();
-          }
-          await changerReglages({ sauvegardeLe: new Date().toISOString() });
-          rafraichir();
-        },
+        onclick: () => void enregistrerFichier(),
       },
       icone('sauvegarde', 20),
       'Enregistrer dans un fichier',
@@ -397,4 +380,37 @@ function blocDictee(): HTMLElement {
         )
       : null,
   );
+}
+
+/**
+ * Sauvegarde dans un fichier : par « Partager » si le téléphone le propose (Drive, Gmail…), sinon
+ * dans Téléchargements. Le partage peut être refusé quand la préparation du fichier a pris du
+ * temps (le téléphone ne le permet que juste après le toucher) : le fichier est alors téléchargé.
+ */
+async function enregistrerFichier(): Promise<void> {
+  message('Préparation du fichier…');
+  const blob = await fabriquerSauvegarde();
+  const nom = `tour-de-plaine-sauvegarde-${jour()}.json`;
+  const fichier = new File([blob], nom, { type: 'application/json' });
+  let fait = false;
+  if (navigator.canShare?.({ files: [fichier] })) {
+    try {
+      await navigator.share({ files: [fichier], title: nom });
+      fait = true;
+    } catch (e) {
+      // Partage annulé par toi : rien d'autre à faire.
+      if ((e as Error).name === 'AbortError') return;
+    }
+  }
+  if (!fait) {
+    const url = URL.createObjectURL(blob);
+    const a = el('a', { href: url, download: nom });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    message(`Fichier enregistré dans Téléchargements : ${nom}`);
+  }
+  await changerReglages({ sauvegardeLe: new Date().toISOString() });
+  rafraichir();
 }

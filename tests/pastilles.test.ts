@@ -23,5 +23,6 @@ describe('pastilles modifiables', () => {
   it('retrouve la liste de l’appli pour chaque culture', () => {
     expect(listeDOrigine(cleConstats('Ravageur', 'colza'))).toContain('Grosses altises');
     expect(listeDOrigine(cleStades('cereale'))).toContain('Épi 1 cm');
+    expect(listeDOrigine(cleConstats('Ravageur', 'oeillette'))).toContain('Charançon');
   });
 });

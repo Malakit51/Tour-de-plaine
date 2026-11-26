@@ -3,15 +3,9 @@
 // gravité, à revoir), une remarque et des photos. Tout est facultatif sauf la parcelle. L'appli n'enregistre que des observations : les
 // interventions viennent de Geofolia (décision de Maxime, 05/11/2026).
 
-import { noter, ordonner } from '../agro/habitudes';
-import {
-  CATEGORIES,
-  DELAIS_REVOIR,
-  GRAVITES,
-  STADES,
-  constatsProposes,
-  groupe,
-} from '../agro/listes';
+import { noter } from '../agro/habitudes';
+import { cleStades, pastillesDe } from '../agro/pastilles';
+import { CATEGORIES, DELAIS_REVOIR, GRAVITES, groupe } from '../agro/listes';
 import { MODELES, rangerDictee, type Rangement } from '../ia/claude';
 import { contexteDictee } from '../ia/contexte';
 import { ecouter, voixDisponible } from '../ia/voix';
@@ -33,6 +27,7 @@ import {
 import {
   enregistrerHabitudes,
   enregistrerNote,
+  enregistrerPastilles,
   etat,
   parcelle,
   parcelles,
@@ -142,7 +137,7 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     zoneStade.replaceChildren(
       el('h2', {}, 'Stade'),
       pastilles(
-        avec(ordonner(etat.habitudes, `stade|${g}`, STADES[g]), n.stade),
+        avec(pastillesDe(etat.pastilles, etat.habitudes, cleStades(g)), n.stade),
         n.stade ? [n.stade] : [],
         (c) => {
           n.stade = c[0] ?? '';
@@ -154,7 +149,7 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
     zoneConstats.replaceChildren();
     if (!n.categorie) return;
     const cle = `${n.categorie}|${groupe(culture())}`;
-    const options = ordonner(etat.habitudes, cle, constatsProposes(n.categorie, culture()));
+    const options = pastillesDe(etat.pastilles, etat.habitudes, cle);
     for (const c of n.constats) if (!options.includes(c)) options.push(c);
     const autre = el('input', {
       type: 'text',
@@ -166,6 +161,10 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
       const v = autre.value.trim();
       if (!v) return;
       if (!n.constats.includes(v)) n.constats.push(v);
+      // Liste modifiée dans Mes pastilles : le nouveau constat y entre aussi (sinon il y apparaît
+      // tout seul, par les habitudes, une fois la note enregistrée).
+      if (etat.pastilles[cle] && !etat.pastilles[cle].includes(v))
+        void enregistrerPastilles(cle, [...etat.pastilles[cle], v]);
       dessinerConstats();
     };
     autre.addEventListener('keydown', (e) => e.key === 'Enter' && (e.preventDefault(), ajouter()));

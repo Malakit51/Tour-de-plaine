@@ -19,6 +19,7 @@ import {
   parcelles,
 } from './etat';
 import { bandeauInstallation } from './installation';
+import { blocMesPastilles } from './mes-pastilles';
 import { fabriquerSauvegarde, reprendreSauvegarde } from './sauvegarde';
 import { choisirTheme, themeChoisi, type Theme } from './theme';
 
@@ -62,6 +63,7 @@ export function ecranReglages(): HTMLElement {
     blocJalon(),
     blocCorrespondances(),
     blocDictee(),
+    blocMesPastilles(),
     blocSauvegarde(),
     blocTheme(),
   );

@@ -3,6 +3,7 @@
 
 import type { Modele } from '../ia/claude';
 import type { Habitudes } from '../agro/habitudes';
+import type { Personnalisees } from '../agro/pastilles';
 import * as base from '../registre/base';
 import { rapprocher } from '../registre/correspondance';
 import type {
@@ -36,6 +37,8 @@ export const etat = {
   choixContours: {} as Record<string, string>,
   notes: [] as Note[],
   habitudes: {} as Habitudes,
+  /** Listes de pastilles modifiées dans Réglages › Mes pastilles. */
+  pastilles: {} as Personnalisees,
   reglages: {
     afficherPrevu: false,
     gps: false,
@@ -65,6 +68,7 @@ export async function charger(): Promise<void> {
   etat.jalon = (await base.lireValeur<ContoursJalon>('jalon')) ?? null;
   etat.choixContours = (await base.lireValeur<Record<string, string>>('choix-contours')) ?? {};
   etat.habitudes = (await base.lireValeur<Habitudes>('habitudes')) ?? {};
+  etat.pastilles = (await base.lireValeur<Personnalisees>('pastilles')) ?? {};
   etat.reglages = { ...etat.reglages, ...((await base.lireValeur<Reglages>('reglages')) ?? {}) };
   etat.notes = await base.toutesLesNotes();
   etat.cleApi = (await base.lireValeur<string>(CLE_API)) ?? '';
@@ -177,4 +181,13 @@ export async function enregistrerCleApi(cle: string): Promise<void> {
   etat.cleApi = cle.trim();
   if (etat.cleApi) await base.ecrireValeur(CLE_API, etat.cleApi);
   else await base.effacerValeur(CLE_API);
+}
+
+/** Remplace une liste de pastilles (null : revenir à celle de l'appli). */
+export async function enregistrerPastilles(cle: string, liste: string[] | null): Promise<void> {
+  const p = { ...etat.pastilles };
+  if (liste === null) delete p[cle];
+  else p[cle] = [...new Set(liste.map((v) => v.trim()).filter(Boolean))];
+  etat.pastilles = p;
+  await base.ecrireValeur('pastilles', p);
 }

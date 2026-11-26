@@ -261,6 +261,61 @@ button,
 .pastilles.defile .pastille {
   flex: none;
 }
+/* Mes pastilles : une pastille = son nom (renommer) et ✕ (retirer). */
+.pastille.modifiable {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px 0 0;
+}
+.pastille.modifiable button {
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  min-height: 42px;
+}
+.pastille.modifiable .nom-pastille {
+  padding: 0 6px 0 14px;
+}
+.pastille.modifiable .retirer-pastille {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--doux);
+}
+.mes-pastilles > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.liste-pastilles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--ligne-douce);
+  padding-top: 8px;
+}
+.liste-pastilles > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.liste-pastilles > summary .compte {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--seg);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.liste-pastilles > * + * {
+  margin-top: 8px;
+}
 .pastille[aria-pressed='true'] {
   background: var(--vert-fond);
   border-color: var(--vert-fond);

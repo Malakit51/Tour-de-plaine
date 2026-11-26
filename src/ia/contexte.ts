@@ -1,8 +1,8 @@
 // Ce que Claude reçoit avec une dictée : les parcelles et les pastilles de l'appli, pour qu'il
 // reprenne les mêmes mots (et que ses réponses allument les bonnes pastilles).
 
-import { ordonner } from '../agro/habitudes';
-import { CATEGORIES, GRAVITES, STADES, constatsProposes, groupe } from '../agro/listes';
+import { cleConstats, cleStades, pastillesDe } from '../agro/pastilles';
+import { CATEGORIES, GRAVITES, groupe } from '../agro/listes';
 import { jour } from '../app/commun';
 import { etat, parcelle, parcelles } from '../app/etat';
 import type { Contexte } from './claude';
@@ -14,14 +14,14 @@ export function contexteDictee(parcelleChoisie: string): Contexte {
   for (const p of ps) {
     if (!p.culture || stades[p.culture]) continue;
     const g = groupe(p.culture);
-    stades[p.culture] = ordonner(etat.habitudes, `stade|${g}`, STADES[g]);
+    stades[p.culture] = pastillesDe(etat.pastilles, etat.habitudes, cleStades(g));
   }
   // Constats : ceux de la culture de la parcelle choisie (sinon génériques).
   const culture = parcelle(parcelleChoisie)?.culture ?? '';
   const g = groupe(culture);
   const constats: Record<string, string[]> = {};
   for (const c of CATEGORIES)
-    constats[c] = ordonner(etat.habitudes, `${c}|${g}`, constatsProposes(c, culture));
+    constats[c] = pastillesDe(etat.pastilles, etat.habitudes, cleConstats(c, g));
   return {
     aujourdhui: jour(),
     parcelleChoisie,

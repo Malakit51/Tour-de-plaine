@@ -44,6 +44,8 @@ Décision du 05/11/2026 : **l'appli est une appli d'observation, pas d'enregistr
 
 Pastilles modifiables (demandé le 26/11/2026) : Réglages › Mes pastilles (`src/app/mes-pastilles.ts`, `src/agro/pastilles.ts`), par groupe de cultures, les stades et les constats de chaque catégorie : renommer (toucher), retirer (✕), ajouter, remettre la liste de l'appli. Une liste modifiée est gardée en entier dans la valeur `pastilles` (même clé que les habitudes : `stade|cereale`, `Adventice|colza`) et remplace celle de l'appli, à la saisie comme dans ce qui est envoyé à Claude ; les catégories et les gravités restent fixes (elles structurent le Journal et le schéma de Claude). Les notes déjà prises ne changent pas.
 
+Mises à jour : pas de `import()` dynamique dans l'appli (le SDK d'Anthropic est importé normalement). Le 26/11/2026, une appli restée ouverte pendant une publication a cherché `assets/sdk-….js`, disparu avec le nouveau build. Filet : `vite:preloadError` recharge la page une fois (`src/main.ts`).
+
 Installation : le menu ⋮ de Chrome dit l'appli « déjà installée » (Jalon est installé à la même adresse malakit51.github.io). Comme dans Valeur engrais, la page propose elle-même « Installer » (bandeau en haut de Plaine et de Réglages, `src/app/installation.ts`, événement `beforeinstallprompt`) : cette fenêtre-là ne fait pas ce test.
 
 Fichiers repris de Jalon : `src/sources/taskdata.ts` (lecture du TASKDATA, sans modification), `src/formats/dezip.ts`, `src/ui/dom.ts`, la direction visuelle « Plein champ ».

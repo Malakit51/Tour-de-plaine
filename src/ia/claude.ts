@@ -1,8 +1,10 @@
 // Dictée rangée par Claude (API Anthropic, compte de Maxime, clé gardée sur le téléphone) : le
 // texte dicté devient des pastilles (parcelle, stade, catégorie, constats, gravité, à revoir) et
 // une courte synthèse. Aussi : le résumé d'un tour de plaine pour le Journal.
-// La bibliothèque est chargée seulement au premier usage : l'appli reste légère sans la dictée.
+// La bibliothèque fait partie de l'appli (pas chargée à part au premier usage) : une appli restée
+// ouverte pendant une mise à jour cherchait sinon un fichier qui n'existait plus (26/11/2026).
 
+import Anthropic from '@anthropic-ai/sdk';
 import type { Note } from '../registre/modele';
 
 export type Modele = 'haiku' | 'sonnet' | 'opus';
@@ -41,7 +43,6 @@ export interface Rangement {
 }
 
 async function client(cle: string) {
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
   // La clé est celle de Maxime, sur son téléphone, dans son appli : l'appel direct depuis le
   // navigateur est voulu (pas de serveur entre les deux).
   return new Anthropic({ apiKey: cle, dangerouslyAllowBrowser: true, maxRetries: 1 });
@@ -49,7 +50,6 @@ async function client(cle: string) {
 
 /** Message clair pour une erreur de l'API. */
 async function traduire(e: unknown): Promise<ErreurClaude> {
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
   if (e instanceof ErreurClaude) return e;
   if (e instanceof Anthropic.AuthenticationError)
     return new ErreurClaude(

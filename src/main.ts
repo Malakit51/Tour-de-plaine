@@ -70,6 +70,27 @@ async function demarrer(): Promise<void> {
   void garderHorsReseau().catch(() => undefined);
 }
 
+// Appli restée ouverte pendant une mise à jour : un fichier de l'ancienne version manque en ligne.
+// On recharge une fois (la nouvelle version arrive), au lieu d'afficher une erreur.
+addEventListener('vite:preloadError', (e) => {
+  try {
+    if (sessionStorage.getItem('tour-de-plaine/recharge')) return;
+    sessionStorage.setItem('tour-de-plaine/recharge', '1');
+  } catch {
+    return;
+  }
+  e.preventDefault();
+  location.reload();
+});
+addEventListener('load', () =>
+  setTimeout(() => {
+    try {
+      sessionStorage.removeItem('tour-de-plaine/recharge');
+    } catch {
+      // pas de stockage : tant pis
+    }
+  }, 10000),
+);
 addEventListener('unhandledrejection', (e) =>
   message(String((e.reason as Error)?.message ?? e.reason), true),
 );

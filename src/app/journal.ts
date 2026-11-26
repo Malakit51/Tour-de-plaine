@@ -17,7 +17,9 @@ import {
 } from './commun';
 import { resumerTour } from '../ia/claude';
 import { ecrireValeur, effacerValeur, lireValeur } from '../registre/base';
-import { aRevoir, etat, parcelle, parcelles } from './etat';
+import type { Parcelle } from '../registre/modele';
+import { aRevoir, etat, interventionsDe, parcelle, parcelles } from './etat';
+import { semisRealise } from './resume';
 
 /** Pas vue depuis ce nombre de jours : la parcelle est signalée. */
 const OUBLI = 15;
@@ -63,8 +65,8 @@ export function ecranJournal(): HTMLElement {
             el('span', { class: 'doux' }, `${nbParcelles} parcelle${nbParcelles > 1 ? 's' : ''}`),
           ),
           etat.cleApi ? resume(j, observations) : null,
-          // Dans la journée, dans l'ordre du tour.
-          ...[...observations].reverse().map((n) => elementObservation(n, true)),
+          // Dans la journée aussi, la plus récente en haut (demandé le 26/11/2026).
+          ...observations.map((n) => elementObservation(n, true)),
         ),
       );
     }
@@ -80,17 +82,31 @@ export function ecranJournal(): HTMLElement {
   return page;
 }
 
+/**
+ * Culture en place : semis fait d'après Geofolia (hors couverts), culture pérenne (luzerne,
+ * prairie), ou parcelle déjà observée (si tu l'as notée, quelque chose y pousse). Une parcelle
+ * sans culture, ou dont la culture n'est pas encore semée, n'est pas en végétation.
+ */
+export function enVegetation(p: Parcelle, dejaObservee: boolean): boolean {
+  if (!p.culture) return false;
+  if (dejaObservee) return true;
+  if (/luzerne|prairie|trèfle|sainfoin/i.test(p.culture)) return true;
+  return semisRealise(interventionsDe(p.nom)) !== undefined;
+}
+
 function synthese(notes: Note[]): HTMLElement {
   const debut = ajouterJours(jour(), -6);
   const semaine = notes.filter((n) => n.date.slice(0, 10) >= debut);
   const vues = new Set(semaine.map((n) => n.parcelle));
   const aIntervenir = semaine.filter((n) => n.gravite === 'Intervenir');
   const revoir = aRevoir().filter((n) => joursJusqua(n.aRevoir) <= 0);
-  // Parcelles pas vues depuis OUBLI jours (ou jamais vues).
+  // Parcelles en végétation pas vues depuis OUBLI jours (ou jamais vues). Une parcelle sans
+  // culture en place (pas encore semée) n'a pas besoin d'être vue.
   const derniere = new Map<string, string>();
   for (const n of notes)
     if (!derniere.has(n.parcelle)) derniere.set(n.parcelle, n.date.slice(0, 10));
   const oubliees = parcelles().filter((p) => {
+    if (!enVegetation(p, derniere.has(p.nom))) return false;
     const d = derniere.get(p.nom);
     return !d || joursJusqua(d) < -OUBLI;
   });
@@ -114,7 +130,7 @@ function synthese(notes: Note[]): HTMLElement {
           el(
             'summary',
             {},
-            `${oubliees.length} parcelle${oubliees.length > 1 ? 's' : ''} pas vue${oubliees.length > 1 ? 's' : ''} depuis ${OUBLI} jours`,
+            `${oubliees.length} parcelle${oubliees.length > 1 ? 's' : ''} en végétation pas vue${oubliees.length > 1 ? 's' : ''} depuis ${OUBLI} jours`,
           ),
           el(
             'ul',

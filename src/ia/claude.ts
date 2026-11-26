@@ -9,11 +9,55 @@ import type { Note } from '../registre/modele';
 
 export type Modele = 'haiku' | 'sonnet' | 'opus';
 
-export const MODELES: Record<Modele, { id: string; nom: string; detail: string }> = {
-  haiku: { id: 'claude-haiku-5-5', nom: 'Haiku', detail: 'le moins cher' },
-  sonnet: { id: 'claude-sonnet-5-5', nom: 'Sonnet', detail: 'intermédiaire' },
-  opus: { id: 'claude-opus-5-5', nom: 'Opus', detail: 'le plus capable' },
+/**
+ * Modèles, et leur tarif en dollars par million de jetons lus (entrée) et écrits (sortie, réflexion
+ * comprise), d'après la grille d'Anthropic d'octobre 2026 : sert seulement à estimer la
+ * consommation dans l'appli.
+ */
+export const MODELES: Record<
+  Modele,
+  { id: string; nom: string; detail: string; entree: number; sortie: number }
+> = {
+  haiku: {
+    id: 'claude-haiku-5-5',
+    nom: 'Haiku',
+    detail: 'le moins cher',
+    entree: 0.1,
+    sortie: 0.5,
+  },
+  sonnet: {
+    id: 'claude-sonnet-5-5',
+    nom: 'Sonnet',
+    detail: 'intermédiaire',
+    entree: 2,
+    sortie: 10,
+  },
+  opus: { id: 'claude-opus-5-5', nom: 'Opus', detail: 'le plus capable', entree: 4, sortie: 20 },
 };
+
+/** Appelé après chaque réponse de Claude, avec les jetons comptés par Anthropic. */
+let auConsommer: (modele: Modele, entree: number, sortie: number) => void = () => {};
+export function suivreConsommation(f: typeof auConsommer): void {
+  auConsommer = f;
+}
+function compter(
+  modele: Modele,
+  usage:
+    | {
+        input_tokens?: number | null;
+        output_tokens?: number | null;
+        cache_creation_input_tokens?: number | null;
+        cache_read_input_tokens?: number | null;
+      }
+    | undefined,
+): void {
+  if (!usage) return;
+  const entree =
+    (usage.input_tokens ?? 0) +
+    (usage.cache_creation_input_tokens ?? 0) +
+    (usage.cache_read_input_tokens ?? 0);
+  auConsommer(modele, entree, usage.output_tokens ?? 0);
+}
 
 export class ErreurClaude extends Error {
   override name = 'ErreurClaude';
@@ -189,6 +233,7 @@ export async function rangerDictee(
         ? {}
         : { fallbacks: 'default' as const, betas: ['server-side-fallback-2026-07-01'] }),
     });
+    compter(modele, reponse.usage);
     if (reponse.stop_reason === 'refusal')
       throw new ErreurClaude('Claude n’a pas voulu ranger cette dictée.');
     if (reponse.stop_reason === 'max_tokens')
@@ -246,6 +291,7 @@ export async function resumerTour(
         ? {}
         : { fallbacks: 'default' as const, betas: ['server-side-fallback-2026-07-01'] }),
     });
+    compter(modele, reponse.usage);
     if (reponse.stop_reason === 'refusal')
       throw new ErreurClaude('Claude n’a pas voulu résumer ce tour.');
     return reponse.content

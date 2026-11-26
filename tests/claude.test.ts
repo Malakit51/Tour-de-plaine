@@ -1,7 +1,15 @@
 // Dictée rangée par Claude : la demande envoyée et la lecture de la réponse, avec une API simulée
 // (aucun appel réel, aucune dépense).
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { defautCle, nettoyerCle, rangerDictee, verifierCle, type Contexte } from '../src/ia/claude';
+import {
+  defautCle,
+  nettoyerCle,
+  rangerDictee,
+  suivreConsommation,
+  verifierCle,
+  type Contexte,
+} from '../src/ia/claude';
+import { bilan } from '../src/app/consommation';
 
 const contexte: Contexte = {
   aujourdhui: '2026-11-05',
@@ -156,6 +164,44 @@ describe('dictée rangée par Claude', () => {
     await expect(rangerDictee('test', contexte, 'sk-ant-test', 'haiku')).rejects.toThrow(
       /Crédit épuisé/,
     );
+  });
+
+  it('compte les jetons de chaque réponse, pour estimer la consommation', async () => {
+    const comptes: unknown[] = [];
+    suivreConsommation((...x) => comptes.push(x));
+    simuler(
+      reponse({
+        ...message(
+          JSON.stringify({
+            parcelle: '',
+            stade: '',
+            categorie: '',
+            constats: [],
+            gravite: '',
+            a_revoir: '',
+            synthese: 'RAS.',
+          }),
+        ),
+        usage: { input_tokens: 2400, output_tokens: 300, cache_read_input_tokens: 100 },
+      }),
+    );
+    await rangerDictee('rien', contexte, 'sk-ant-test', 'opus');
+    expect(comptes).toEqual([['opus', 2500, 300]]);
+    suivreConsommation(() => {});
+  });
+
+  it('convertit les jetons en dollars selon le modèle', () => {
+    const c = {
+      '2026-11': {
+        haiku: { appels: 10, entree: 25000, sortie: 4000 },
+        opus: { appels: 1, entree: 2500, sortie: 300 },
+      },
+    };
+    const b = bilan(c, '2026-11');
+    expect(b.appels).toBe(11);
+    // Haiku : 25 000 × 0,10 + 4 000 × 0,50 ; Opus : 2 500 × 4 + 300 × 20 (dollars par million).
+    expect(b.dollars).toBeCloseTo((2500 + 2000 + 10000 + 6000) / 1e6, 10);
+    expect(bilan(c, '2026-10')).toEqual({ dollars: 0, appels: 0 });
   });
 
   it('un refus de Claude est signalé', async () => {

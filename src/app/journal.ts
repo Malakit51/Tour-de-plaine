@@ -5,6 +5,7 @@
 import { CATEGORIES } from '../agro/listes';
 import type { Note } from '../registre/modele';
 import { el } from '../ui/dom';
+import { icone } from '../ui/icones';
 import { elementObservation } from './observation';
 import {
   ajouterJours,
@@ -171,6 +172,7 @@ function resume(j: string, notes: Note[]): HTMLElement {
       el(
         'div',
         { class: 'actions-resume' },
+        boutonEcouter(r.texte),
         el(
           'button',
           {
@@ -235,4 +237,30 @@ function resume(j: string, notes: Note[]): HTMLElement {
     if (r) montrer(r);
   });
   return zone;
+}
+
+/**
+ * « Écouter » : la voix de synthèse du téléphone lit le résumé (gratuit, sans Claude ni réseau
+ * selon le téléphone). Retoucher le bouton arrête la lecture.
+ */
+function boutonEcouter(texte: string): HTMLElement | null {
+  if (!('speechSynthesis' in window)) return null;
+  const bouton = el('button', { class: 'bouton secondaire' }, icone('haut-parleur', 20), 'Écouter');
+  const dessiner = (enCours: boolean) =>
+    bouton.replaceChildren(icone('haut-parleur', 20), enCours ? 'Arrêter' : 'Écouter');
+  bouton.addEventListener('click', () => {
+    if (speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+      dessiner(false);
+      return;
+    }
+    const phrase = new SpeechSynthesisUtterance(texte);
+    phrase.lang = 'fr-FR';
+    const voix = speechSynthesis.getVoices().find((v) => v.lang.startsWith('fr'));
+    if (voix) phrase.voice = voix;
+    phrase.onend = phrase.onerror = () => dessiner(false);
+    speechSynthesis.speak(phrase);
+    dessiner(true);
+  });
+  return bouton;
 }

@@ -5,6 +5,7 @@ import '@fontsource/atkinson-hyperlegible/700.css';
 import './style.css';
 import { demanderStockageDurable } from './registre/base';
 import { message } from './app/commun';
+import { compterConsommation } from './app/consommation';
 import { charger, enregistrerJalon, etat } from './app/etat';
 import { ecouterInstallation } from './app/installation';
 import { afficher } from './app/navigation';
@@ -54,8 +55,13 @@ async function demarrer(): Promise<void> {
     return;
   }
   await suivreJalon();
+  compterConsommation();
   initialiserGps();
-  addEventListener('hashchange', afficher);
+  addEventListener('hashchange', () => {
+    // Lecture du résumé en cours : elle s'arrête quand on change d'écran.
+    if (!location.hash.startsWith('#journal')) window.speechSynthesis?.cancel();
+    afficher();
+  });
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden)
       void suivreJalon().then(

@@ -18,6 +18,7 @@ import {
   importCourant,
   parcelles,
 } from './etat';
+import { CREDIT_MENSUEL, bilan, lireConsommation, moisDe } from './consommation';
 import { bandeauInstallation } from './installation';
 import { blocMesPastilles } from './mes-pastilles';
 import { fabriquerSauvegarde, reprendreSauvegarde } from './sauvegarde';
@@ -363,6 +364,7 @@ function blocDictee(): HTMLElement {
         void changerReglages({ modeleDictee: m }).then(rafraichir);
       },
     ),
+    zoneConsommation(),
     aRanger.length
       ? el(
           'details',
@@ -421,4 +423,64 @@ async function enregistrerFichier(): Promise<void> {
   }
   await changerReglages({ sauvegardeLe: new Date().toISOString() });
   rafraichir();
+}
+
+/** Consommation estimée de Claude sur ce téléphone : ce mois-ci et le précédent. */
+function zoneConsommation(): HTMLElement {
+  const zone = el(
+    'div',
+    { class: 'consommation' },
+    el('h3', {}, 'Consommation (estimation, en dollars)'),
+  );
+  // Sous un dollar, en centimes de dollar (« 0,05 centime ») : une dictée coûte très peu.
+  const dollars = (d: number) => {
+    const fr = (x: number, n: number) => x.toLocaleString('fr-FR', { maximumFractionDigits: n });
+    if (d >= 1) return `${fr(d, 2)} $`;
+    const c = d * 100;
+    return `${fr(c, c < 0.1 ? 3 : 2)} centime${c >= 2 ? 's' : ''}`;
+  };
+  void lireConsommation().then((c) => {
+    const maintenant = new Date();
+    const ceMois = moisDe(maintenant);
+    const avant = moisDe(new Date(maintenant.getFullYear(), maintenant.getMonth() - 1, 1));
+    const b = bilan(c, ceMois);
+    const p = bilan(c, avant);
+    const part = (b.dollars / CREDIT_MENSUEL) * 100;
+    const lignes: HTMLElement[] = [
+      el(
+        'p',
+        {},
+        el('strong', {}, `Ce mois-ci : ${dollars(b.dollars)}`),
+        ` pour ${b.appels} appel${b.appels > 1 ? 's' : ''} à Claude`,
+        b.appels
+          ? ` (${part < 0.1 ? 'moins de 0,1' : part.toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % des ${CREDIT_MENSUEL} $ mensuels du forfait Team).`
+          : '.',
+      ),
+    ];
+    if (b.appels)
+      lignes.push(
+        el(
+          'p',
+          { class: 'doux' },
+          `Soit environ ${dollars(b.dollars / b.appels)} par appel (dictée rangée ou résumé de tour).`,
+        ),
+      );
+    if (p.appels)
+      lignes.push(
+        el(
+          'p',
+          { class: 'doux' },
+          `Le mois dernier : ${dollars(p.dollars)} pour ${p.appels} appels.`,
+        ),
+      );
+    lignes.push(
+      el(
+        'p',
+        { class: 'doux' },
+        'Estimation pour ce téléphone, d’après les tarifs d’Anthropic. Le décompte exact de ton compte est sur platform.claude.com › Usage.',
+      ),
+    );
+    zone.append(...lignes);
+  });
+  return zone;
 }

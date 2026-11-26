@@ -26,6 +26,8 @@ const TRACES = {
   sauvegarde: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
   ouvrir: '<path d="M4 6h6l2 2h8v11H4z"/>',
   micro: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/>',
+  'haut-parleur':
+    '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/>',
   liste: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
   carte: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>',
 } as const;

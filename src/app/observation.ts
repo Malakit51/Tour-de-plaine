@@ -2,9 +2,9 @@
 // pastilles (stade, ce qui est vu, gravité, à revoir) ; la remarque, la dictée et les photos sont
 // repliées. Toucher ouvre l'observation ; un appui long propose de la supprimer.
 
-import { lirePhoto } from '../registre/base';
 import type { Note } from '../registre/modele';
 import { el } from '../ui/dom';
+import { vignettesPhotos } from './photos';
 import { dateCourte, message, naviguer } from './commun';
 import { elementsDictee } from './dictee-note';
 import { parcelle, supprimerNote } from './etat';
@@ -43,25 +43,10 @@ export function elementObservation(n: Note, avecParcelle: boolean): HTMLElement 
           photos,
         )
       : null;
-  // Photos chargées seulement quand on déplie ; toucher une photo l'agrandit.
+  // Photos chargées seulement quand on déplie ; toucher une photo l'ouvre en plein écran.
   replie?.addEventListener(
     'toggle',
-    () => {
-      for (const id of n.photos) {
-        void lirePhoto(id).then((ph) => {
-          if (!ph) return;
-          const url = URL.createObjectURL(ph.image);
-          photos.append(
-            el('img', {
-              src: url,
-              alt: 'Photo',
-              class: 'vignette petite',
-              onclick: () => agrandir(url),
-            }),
-          );
-        });
-      }
-    },
+    () => void vignettesPhotos(n.photos, photos, 'vignette petite'),
     { once: true },
   );
 
@@ -168,15 +153,5 @@ function menuObservation(n: Note): void {
     ),
   );
   voile.addEventListener('click', (e) => e.target === voile && fermer());
-  document.body.append(voile);
-}
-
-function agrandir(url: string): void {
-  const voile: HTMLElement = el(
-    'div',
-    { class: 'voile-photo' },
-    el('img', { src: url, alt: 'Photo' }),
-  );
-  voile.addEventListener('click', () => voile.remove());
   document.body.append(voile);
 }

@@ -9,7 +9,7 @@ import { CATEGORIES, DELAIS_REVOIR, GRAVITES, groupe } from '../agro/listes';
 import { MODELES, rangerDictee, type Rangement } from '../ia/claude';
 import { contexteDictee } from '../ia/contexte';
 import { ecouter, voixDisponible } from '../ia/voix';
-import { ecrirePhoto, lirePhoto, nouvelId } from '../registre/base';
+import { ecrirePhoto, nouvelId } from '../registre/base';
 import type { Gravite, Note } from '../registre/modele';
 import { el } from '../ui/dom';
 import { icone } from '../ui/icones';
@@ -33,7 +33,7 @@ import {
   parcelles,
   supprimerNote,
 } from './etat';
-import { reduirePhoto } from './photos';
+import { reduirePhoto, vignettesPhotos } from './photos';
 import { distanceLisible, parcelleIci, parcellesProches } from './position';
 
 function noteVide(nomParcelle: string): Note {
@@ -251,17 +251,13 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
   texte.addEventListener('input', () => (n.texte = texte.value));
 
   const vignettes = el('div', { class: 'vignettes' });
-  const dessinerPhotos = () => {
-    vignettes.replaceChildren();
-    for (const id of n.photos) {
-      const cadre = el('div', { class: 'cadre-vignette' });
-      void lirePhoto(id).then((ph) => {
-        if (!ph) return;
-        cadre.prepend(
-          el('img', { src: URL.createObjectURL(ph.image), alt: 'Photo', class: 'vignette' }),
-        );
-      });
-      cadre.append(
+  // Vignettes : toucher ouvre la photo en plein écran, ✕ la retire de l'observation.
+  const dessinerPhotos = () =>
+    void vignettesPhotos(n.photos, vignettes, 'vignette', (img, id) =>
+      el(
+        'div',
+        { class: 'cadre-vignette' },
+        img,
         el(
           'button',
           {
@@ -275,10 +271,8 @@ export function ecranSaisie(nomParcelle: string | null, idNote: string | null): 
           },
           icone('fermer', 16),
         ),
-      );
-      vignettes.append(cadre);
-    }
-  };
+      ),
+    );
   const entreePhoto = el('input', {
     type: 'file',
     accept: 'image/*',

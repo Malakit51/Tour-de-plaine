@@ -28,7 +28,7 @@ async function suivreJalon(): Promise<void> {
 /** Garde la page et ses fichiers pour ouvrir l'appli sans réseau (voir public/sw.js). */
 async function garderHorsReseau(): Promise<void> {
   if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return;
-  await navigator.serviceWorker.register('sw.js');
+  await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
   const fichiers = performance
     .getEntriesByType('resource')
     .map((r) => r.name)

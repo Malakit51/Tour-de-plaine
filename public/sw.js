@@ -31,7 +31,12 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   if (e.request.mode === 'navigate') {
     // Toujours la page de l'appli (l'adresse après # ne compte pas).
-    e.respondWith(depuisReseau(new Request(new URL('./', self.registration.scope).href)));
+    // « no-cache » : demander au serveur si la page a changé, sans se fier au cache du navigateur
+    // (GitHub Pages le garde 10 minutes : une appli rouverte juste après une mise à jour gardait
+    // l'ancienne version).
+    e.respondWith(
+      depuisReseau(new Request(new URL('./', self.registration.scope).href, { cache: 'no-cache' })),
+    );
   } else if (url.pathname.includes('/assets/')) {
     e.respondWith(depuisCache(e.request));
   } else {
